@@ -779,6 +779,19 @@ async def get_multi_source_threat_intel(ip: str, domain: Optional[str], vt_data:
         "sources": sources
     }
 
+# ── Verified Trusted Domains Whitelist ─────────────────────────────────────────
+TRUSTED_DOMAIN_PATTERNS = [
+    r'(^|\.)google\.com$', r'(^|\.)google\.co\.[a-z]{2}$', r'(^|\.)googleapis\.com$', r'(^|\.)gstatic\.com$',
+    r'(^|\.)microsoft\.com$', r'(^|\.)azure\.com$', r'(^|\.)github\.com$', r'(^|\.)githubusercontent\.com$',
+    r'(^|\.)apple\.com$', r'(^|\.)amazon\.com$', r'(^|\.)amazonaws\.com$', r'(^|\.)cloudflare\.com$',
+    r'(^|\.)meta\.com$', r'(^|\.)facebook\.com$', r'(^|\.)twitter\.com$', r'(^|\.)x\.com$',
+    r'(^|\.)linkedin\.com$', r'(^|\.)wikipedia\.org$', r'(^|\.)youtube\.com$', r'(^|\.)netflix\.com$'
+]
+
+def is_trusted_domain(target: str) -> bool:
+    clean = target.strip().lower()
+    return any(re.search(pattern, clean) for pattern in TRUSTED_DOMAIN_PATTERNS)
+
 # ── AI Security Insights ──────────────────────────────────────────────────────
 async def generate_ai_security_insights(target: str, risk_score: int, factors: list, open_ports: list, vt_data: dict, whois_data: dict) -> dict:
     contrib_findings = factors[:4] if factors else ["No major high-risk indicators flagged during port probing."]
@@ -825,10 +838,11 @@ async def network_scan(body: NetworkScanRequest):
         ip = resolve_domain(clean_target)
 
     if not ip:
-        raise HTTPException(status_code=400, detail=f"Could not resolve '{clean_target}' to an IP address")
+        raise HTTPException(status_code=404, detail=f"Failed to resolve domain: {clean_target}")
 
     scan_start = time.time()
     domain_to_check = None if is_ip else clean_target
+    is_whitelisted = is_trusted_domain(clean_target) if domain_to_check else False
 
     ports_task = scan_ports(ip)
     geoip_task = get_geoip_and_ipinfo(ip)
@@ -883,6 +897,12 @@ async def network_scan(body: NetworkScanRequest):
                     "banner": shodan_svc.get("banner")
                 })
 
+    if is_whitelisted:
+        for p in open_ports:
+            p["riskLevel"] = "Low"
+            p["securityRisks"] = "Verified major cloud infrastructure service. Managed by global security protocols."
+            p["recommendation"] = "No action needed (Verified Enterprise Endpoint)."
+
     risk_score = 0
     factors = []
 
@@ -890,19 +910,24 @@ async def network_scan(body: NetworkScanRequest):
         risk_score += 40
         factors.append(f"[CRITICAL] VirusTotal flagged target by {vt_data['malicious']} security vendors")
 
-    if open_ports:
+    if not is_whitelisted and open_ports:
         high_ports = [p for p in open_ports if p.get("riskLevel") in ["High", "Critical"]]
         if high_ports:
             risk_score += 25
             factors.append(f"[HIGH] {len(high_ports)} high-risk ports open ({', '.join(str(p['port']) for p in high_ports[:3])})")
 
-    if whois_data.get("isNewlyRegistered"):
+    if not is_whitelisted and whois_data.get("isNewlyRegistered"):
         risk_score += 20
         factors.append("[WARN] Domain registered within the last 180 days")
 
-    if ssl_data.get("isExpired"):
+    if not is_whitelisted and ssl_data.get("isExpired"):
         risk_score += 15
         factors.append("[WARN] SSL certificate is expired or invalid")
+
+    if is_whitelisted:
+        factors.append("[TRUSTED] Verified Major Infrastructure Domain (Google / Microsoft / Apple / Cloudflare / GitHub)")
+        if vt_data.get("malicious", 0) == 0:
+            risk_score = 0
 
     risk_score = min(100, risk_score)
     risk_level = "Critical" if risk_score >= 70 else ("High" if risk_score >= 40 else ("Medium" if risk_score >= 20 else "Low"))
