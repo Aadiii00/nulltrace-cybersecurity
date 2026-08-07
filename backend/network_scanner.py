@@ -558,6 +558,24 @@ async def get_shodan_intelligence(ip: str) -> dict:
     except Exception as e:
         return {"error": str(e)}
 
+# ── Urlscan Intelligence ──────────────────────────────────────────────────────
+async def get_urlscan_intelligence(domain: str) -> dict:
+    if not URLSCAN_API_KEY:
+        return {}
+    try:
+        url = "https://urlscan.io/api/v1/search/"
+        headers = {"API-Key": URLSCAN_API_KEY}
+        params = {"q": f"domain:{domain}", "size": 3}
+        async with httpx.AsyncClient(timeout=6.0) as client:
+            r = await client.get(url, headers=headers, params=params)
+            if r.status_code == 200:
+                results = r.json().get("results", [])
+                if results:
+                    return results[0]
+    except Exception:
+        pass
+    return {}
+
 # ── DNS & Security Records ───────────────────────────────────────────────────
 async def fetch_dns_record(domain: str, record_type: str, client: httpx.AsyncClient) -> list:
     try:
@@ -751,7 +769,7 @@ async def get_http_security_and_tech(domain: str) -> dict:
     }
 
 # ── Threat Intelligence Aggregator ────────────────────────────────────────────
-async def get_multi_source_threat_intel(ip: str, domain: Optional[str], vt_data: dict) -> dict:
+async def get_multi_source_threat_intel(ip: str, domain: Optional[str], vt_data: dict, urlscan_data: Optional[dict] = None) -> dict:
     sources = []
 
     vt_malicious = vt_data.get("malicious", 0) if "error" not in vt_data else 0
@@ -795,6 +813,25 @@ async def get_multi_source_threat_intel(ip: str, domain: Optional[str], vt_data:
         "isClean": not threatfox_listed,
         "badge": "THREAT DETECTED" if threatfox_listed else "CLEAN",
         "details": "Active Indicator of Compromise found" if threatfox_listed else "No active IOC entries"
+    })
+
+    urlscan_malicious = False
+    urlscan_details = "No malicious history reported"
+    if urlscan_data and isinstance(urlscan_data, dict):
+        verdicts = urlscan_data.get("verdicts", {})
+        urlscan_malicious = verdicts.get("overall", {}).get("malicious", False) or verdicts.get("urlscan", {}).get("malicious", False)
+        if urlscan_malicious:
+            urlscan_details = "Flagged as malicious by urlscan.io scanner"
+        else:
+            urlscan_title = urlscan_data.get("page", {}).get("title", "").lower()
+            if any(term in urlscan_title for term in ["winbuzz", "betting", "gambling", "casino"]):
+                urlscan_details = "Associated with high-risk/regulated gaming content"
+
+    sources.append({
+        "name": "urlscan.io",
+        "isClean": not urlscan_malicious,
+        "badge": "MALICIOUS" if urlscan_malicious else "REPORT AVAILABLE",
+        "details": urlscan_details
     })
 
     sources.append({
@@ -874,15 +911,17 @@ async def network_scan(body: NetworkScanRequest):
         dns_task = get_enhanced_dns_records(domain_to_check, ip)
         ssl_task = get_enhanced_ssl(domain_to_check)
         http_task = get_http_security_and_tech(domain_to_check)
+        urlscan_task = get_urlscan_intelligence(domain_to_check)
     else:
         whois_task = asyncio.sleep(0)
         dns_task = asyncio.sleep(0)
         ssl_task = asyncio.sleep(0)
         http_task = asyncio.sleep(0)
+        urlscan_task = asyncio.sleep(0)
 
     results = await asyncio.gather(
         ports_task, geoip_task, vt_task, shodan_task,
-        whois_task, dns_task, ssl_task, http_task
+        whois_task, dns_task, ssl_task, http_task, urlscan_task
     )
 
     open_ports = results[0]
@@ -893,6 +932,7 @@ async def network_scan(body: NetworkScanRequest):
     dns_data = results[5] if isinstance(results[5], dict) else {}
     ssl_data = results[6] if isinstance(results[6], dict) else {"note": "IP scan — SSL skipped"}
     http_data = results[7] if isinstance(results[7], dict) else {}
+    urlscan_data = results[8] if isinstance(results[8], dict) else {}
 
     if isinstance(shodan_data, dict) and "services" in shodan_data:
         existing_ports = {p["port"] for p in open_ports}
@@ -939,7 +979,45 @@ async def network_scan(body: NetworkScanRequest):
         risk_score += 15
         factors.append("[WARN] SSL certificate is expired or invalid")
 
-    # 2. Trust and Reputation adjustments (Deductions)
+    # 2. Betting, Gambling, and Scam Heuristics
+    is_gambling_or_scam = False
+    heuristics_reason = ""
+    gambling_keywords = [
+        "winbuzz", "bet", "casino", "gambling", "slot", "poker", "jackpot", 
+        "lottery", "bookmaker", "sportsbook", "wager", "lotus365", "fairplay",
+        "1xbet", "betway", "bet365", "dafabet", "rummy", "win777", "win11"
+    ]
+    if domain_to_check:
+        dom_lower = domain_to_check.lower()
+        dom_parts = re.split(r'[^a-zA-Z0-9]', dom_lower)
+        for part in dom_parts:
+            if part in gambling_keywords:
+                is_gambling_or_scam = True
+                heuristics_reason = f"Domain name contains regulated/high-risk keyword: '{part}'"
+                break
+            for brand in ["winbuzz", "1xbet", "betway", "bet365", "dafabet", "lotus365", "fairplay"]:
+                if brand in part:
+                    is_gambling_or_scam = True
+                    heuristics_reason = f"Domain matches known betting/scam platform brand: '{brand}'"
+                    break
+            if is_gambling_or_scam:
+                break
+
+    urlscan_title = urlscan_data.get("page", {}).get("title", "") if isinstance(urlscan_data, dict) else ""
+    if urlscan_title:
+        title_lower = urlscan_title.lower()
+        title_keywords = ["betting", "gambling", "casino", "winbuzz", "1xbet", "lotus365", "fairplay", "play win", "earn money", "gaming company"]
+        for kw in title_keywords:
+            if kw in title_lower:
+                is_gambling_or_scam = True
+                heuristics_reason = f"Web page title contains high-risk/gambling term: '{kw}'"
+                break
+
+    if is_gambling_or_scam:
+        risk_score += 65
+        factors.append(f"[CRITICAL] Regulated/High-Risk Activity: {heuristics_reason}")
+
+    # 3. Trust and Reputation adjustments (Deductions)
     reputation = vt_data.get("reputation", 0) if isinstance(vt_data, dict) else 0
     if reputation > 500:
         risk_score -= 40
@@ -956,12 +1034,16 @@ async def network_scan(body: NetworkScanRequest):
 
     # Domain Age credibility trust
     age_days = whois_data.get("ageDays") if isinstance(whois_data, dict) else None
-    if isinstance(age_days, int) and age_days > 3650:
-        risk_score -= 15
-        factors.append(f"[INFO] Domain is highly established (Age: {age_days // 365} years)")
-    elif isinstance(age_days, int) and age_days > 1825:
-        risk_score -= 10
-        factors.append(f"[INFO] Domain is well-established (Age: {age_days // 365} years)")
+    if not is_gambling_or_scam:
+        if isinstance(age_days, int) and age_days > 3650:
+            risk_score -= 15
+            factors.append(f"[INFO] Domain is highly established (Age: {age_days // 365} years)")
+        elif isinstance(age_days, int) and age_days > 1825:
+            risk_score -= 10
+            factors.append(f"[INFO] Domain is well-established (Age: {age_days // 365} years)")
+    else:
+        if isinstance(age_days, int) and age_days > 3650:
+            factors.append(f"[WARN] Domain age ({age_days // 365} years) does not guarantee safety for unregulated/regulated gaming platforms")
 
     # Recognized High-Trust Global Domains whitelist
     HIGH_TRUST_DOMAINS = {
@@ -981,7 +1063,7 @@ async def network_scan(body: NetworkScanRequest):
     risk_level = "Critical" if risk_score >= 70 else ("High" if risk_score >= 40 else ("Medium" if risk_score >= 20 else "Low"))
     risk_color = "#ef4444" if risk_level == "Critical" else ("#f97316" if risk_level == "High" else ("#eab308" if risk_level == "Medium" else "#22c55e"))
 
-    threat_intel = await get_multi_source_threat_intel(ip, domain_to_check, vt_data)
+    threat_intel = await get_multi_source_threat_intel(ip, domain_to_check, vt_data, urlscan_data)
     ai_insights = await generate_ai_security_insights(clean_target, risk_score, factors, open_ports, vt_data, whois_data)
 
     return {
