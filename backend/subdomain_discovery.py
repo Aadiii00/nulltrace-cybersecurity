@@ -15,6 +15,38 @@ class SubdomainScanRequest(BaseModel):
 SCAN_CACHE: Dict[str, Dict[str, Any]] = {}
 CACHE_TTL = 3600  # 1 hour cache
 
+def extract_root_domain(hostname: str) -> str:
+    # Remove port if present
+    hostname = hostname.split(':')[0].lower().strip()
+    
+    # Common double extension suffixes (ccTLDs + generic)
+    double_suffixes = {
+        "co.uk", "me.uk", "org.uk", "net.uk", "ltd.uk", "plc.uk",
+        "co.in", "net.in", "org.in", "gen.in", "firm.in", "ind.in", "ac.in", "edu.in", "gov.in", "mil.in",
+        "com.au", "net.au", "org.au", "asn.au", "id.au", "gov.au",
+        "com.br", "net.br", "org.br", "gov.br",
+        "com.cn", "net.cn", "org.cn", "gov.cn",
+        "co.jp", "or.jp", "ne.jp", "go.jp", "ac.jp",
+        "com.sg", "net.sg", "org.sg", "edu.sg", "gov.sg",
+        "com.tw", "net.tw", "org.tw", "edu.tw", "gov.tw",
+        "co.za", "org.za", "web.za", "gov.za",
+        "com.tr", "net.tr", "org.tr", "edu.tr", "gov.tr",
+        "com.mx", "net.mx", "org.mx", "edu.mx", "gov.mx",
+        "com.my", "net.my", "org.my", "edu.my", "gov.my"
+    }
+    
+    parts = hostname.split('.')
+    if len(parts) <= 2:
+        return hostname
+        
+    last_two = f"{parts[-2]}.{parts[-1]}"
+    if last_two in double_suffixes:
+        if len(parts) >= 3:
+            return f"{parts[-3]}.{last_two}"
+        return hostname
+        
+    return f"{parts[-2]}.{parts[-1]}"
+
 async def fetch_crt_sh(domain: str) -> List[str]:
     subdomains = set()
     try:
@@ -116,6 +148,9 @@ async def discover_subdomains(body: SubdomainScanRequest):
     
     # Remove protocol prefix if entered
     target = re.sub(r'^https?://', '', target).split('/')[0].split(':')[0]
+    
+    # Extract root domain to scan for subdomains correctly
+    target = extract_root_domain(target)
     
     if not target:
         raise HTTPException(status_code=400, detail="Domain name is required")

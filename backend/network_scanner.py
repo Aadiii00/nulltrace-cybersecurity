@@ -187,6 +187,38 @@ class NetworkScanRequest(BaseModel):
     target: str
 
 # ── Helpers ──────────────────────────────────────────────────────────────────
+def extract_root_domain(hostname: str) -> str:
+    # Remove port if present
+    hostname = hostname.split(':')[0].lower().strip()
+    
+    # Common double extension suffixes (ccTLDs + generic)
+    double_suffixes = {
+        "co.uk", "me.uk", "org.uk", "net.uk", "ltd.uk", "plc.uk",
+        "co.in", "net.in", "org.in", "gen.in", "firm.in", "ind.in", "ac.in", "edu.in", "gov.in", "mil.in",
+        "com.au", "net.au", "org.au", "asn.au", "id.au", "gov.au",
+        "com.br", "net.br", "org.br", "gov.br",
+        "com.cn", "net.cn", "org.cn", "gov.cn",
+        "co.jp", "or.jp", "ne.jp", "go.jp", "ac.jp",
+        "com.sg", "net.sg", "org.sg", "edu.sg", "gov.sg",
+        "com.tw", "net.tw", "org.tw", "edu.tw", "gov.tw",
+        "co.za", "org.za", "web.za", "gov.za",
+        "com.tr", "net.tr", "org.tr", "edu.tr", "gov.tr",
+        "com.mx", "net.mx", "org.mx", "edu.mx", "gov.mx",
+        "com.my", "net.my", "org.my", "edu.my", "gov.my"
+    }
+    
+    parts = hostname.split('.')
+    if len(parts) <= 2:
+        return hostname
+        
+    last_two = f"{parts[-2]}.{parts[-1]}"
+    if last_two in double_suffixes:
+        if len(parts) >= 3:
+            return f"{parts[-3]}.{last_two}"
+        return hostname
+        
+    return f"{parts[-2]}.{parts[-1]}"
+
 def resolve_domain(target: str) -> Optional[str]:
     try:
         clean = re.sub(r'^https?://', '', target).split('/')[0].split(':')[0]
@@ -309,9 +341,11 @@ async def get_whois_intelligence(domain: str) -> dict:
     if re.match(r'^\d{1,3}\.\d{1,3}\.\d{1,3}\.\d{1,3}$', domain):
         return {"error": "WHOIS intelligence is not applicable for raw IP addresses"}
 
+    root_domain = extract_root_domain(domain)
+
     if WHOISXML_API_KEY:
         try:
-            url = f"https://www.whoisxmlapi.com/whoisserver/WhoisService?apiKey={WHOISXML_API_KEY}&domainName={domain}&outputFormat=JSON"
+            url = f"https://www.whoisxmlapi.com/whoisserver/WhoisService?apiKey={WHOISXML_API_KEY}&domainName={root_domain}&outputFormat=JSON"
             async with httpx.AsyncClient(timeout=8.0) as client:
                 r = await client.get(url)
                 if r.status_code == 200:
@@ -381,7 +415,7 @@ async def get_whois_intelligence(domain: str) -> dict:
     # Fallback to RDAP
     try:
         async with httpx.AsyncClient(follow_redirects=True, timeout=8.0) as client:
-            r = await client.get(f"https://rdap.org/domain/{domain}")
+            r = await client.get(f"https://rdap.org/domain/{root_domain}")
             if r.status_code == 200:
                 data = r.json()
                 events = data.get("events", [])
@@ -886,6 +920,7 @@ async def network_scan(body: NetworkScanRequest):
     risk_score = 0
     factors = []
 
+    # 1. Base vulnerability/exposure checks
     if vt_data.get("malicious", 0) > 0:
         risk_score += 40
         factors.append(f"[CRITICAL] VirusTotal flagged target by {vt_data['malicious']} security vendors")
@@ -904,7 +939,45 @@ async def network_scan(body: NetworkScanRequest):
         risk_score += 15
         factors.append("[WARN] SSL certificate is expired or invalid")
 
-    risk_score = min(100, risk_score)
+    # 2. Trust and Reputation adjustments (Deductions)
+    reputation = vt_data.get("reputation", 0) if isinstance(vt_data, dict) else 0
+    if reputation > 500:
+        risk_score -= 40
+        factors.append(f"[INFO] Exceptional domain reputation (VirusTotal score: {reputation})")
+    elif reputation > 100:
+        risk_score -= 25
+        factors.append(f"[INFO] High domain reputation (VirusTotal score: {reputation})")
+    elif reputation > 10:
+        risk_score -= 10
+        factors.append(f"[INFO] Positive domain reputation (VirusTotal score: {reputation})")
+    elif reputation < -5:
+        risk_score += 20
+        factors.append(f"[WARN] Negative domain reputation (VirusTotal score: {reputation})")
+
+    # Domain Age credibility trust
+    age_days = whois_data.get("ageDays") if isinstance(whois_data, dict) else None
+    if isinstance(age_days, int) and age_days > 3650:
+        risk_score -= 15
+        factors.append(f"[INFO] Domain is highly established (Age: {age_days // 365} years)")
+    elif isinstance(age_days, int) and age_days > 1825:
+        risk_score -= 10
+        factors.append(f"[INFO] Domain is well-established (Age: {age_days // 365} years)")
+
+    # Recognized High-Trust Global Domains whitelist
+    HIGH_TRUST_DOMAINS = {
+        "google.com", "gmail.com", "youtube.com", "microsoft.com", "github.com",
+        "apple.com", "cloudflare.com", "amazon.com", "netflix.com", "facebook.com",
+        "instagram.com", "twitter.com", "linkedin.com", "zoom.us", "wikipedia.org",
+        "google.co.in", "google.co.uk", "google.com.sg", "google.ca", "google.de"
+    }
+    if domain_to_check:
+        domain_lower = domain_to_check.lower()
+        if any(domain_lower == td or domain_lower.endswith("." + td) for td in HIGH_TRUST_DOMAINS):
+            risk_score -= 50
+            factors.append("[INFO] Domain is a recognized high-trust public service")
+
+    # Ensure risk score is constrained between 0 and 100
+    risk_score = max(0, min(100, risk_score))
     risk_level = "Critical" if risk_score >= 70 else ("High" if risk_score >= 40 else ("Medium" if risk_score >= 20 else "Low"))
     risk_color = "#ef4444" if risk_level == "Critical" else ("#f97316" if risk_level == "High" else ("#eab308" if risk_level == "Medium" else "#22c55e"))
 
