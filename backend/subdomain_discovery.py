@@ -113,9 +113,19 @@ async def check_host_live(host: str) -> Dict[str, Any]:
             status = "Live"
             https = True
             response_code = r.status_code
+            
             # Reduce risk if secure
-            if risk == "High":
-                risk = "High"  # Admin is still High
+            HIGH_TRUST_DOMAINS = {
+                "google.com", "gmail.com", "youtube.com", "microsoft.com", "github.com",
+                "apple.com", "cloudflare.com", "amazon.com", "netflix.com", "facebook.com",
+                "instagram.com", "twitter.com", "linkedin.com", "zoom.us", "wikipedia.org",
+                "google.co.in", "google.co.uk", "google.com.sg", "google.ca", "google.de"
+            }
+            is_high_trust = any(host == td or host.endswith("." + td) for td in HIGH_TRUST_DOMAINS)
+            if is_high_trust:
+                risk = "Low"
+            elif risk == "High":
+                risk = "High"  # Admin is still High for regular domains
             elif risk == "Medium":
                 risk = "Low"
     except Exception:
