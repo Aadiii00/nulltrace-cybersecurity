@@ -239,12 +239,34 @@ async def scan_port(ip: str, port: int, timeout: float = 1.5) -> dict:
     try:
         future = asyncio.open_connection(ip, port)
         reader, writer = await asyncio.wait_for(future, timeout=timeout)
-        try:
-            if port in [21, 22, 25, 110, 143, 80, 8080]:
-                banner_bytes = await asyncio.wait_for(reader.read(128), timeout=1.0)
+        
+        is_banner_first = port in [21, 22, 23, 25, 110, 143]
+        if is_banner_first:
+            try:
+                banner_bytes = await asyncio.wait_for(reader.read(128), timeout=1.2)
+                if not banner_bytes:
+                    writer.close()
+                    try:
+                        await writer.wait_closed()
+                    except Exception:
+                        pass
+                    return {"port": port, "state": "closed", "service": meta["service"]}
                 banner = banner_bytes.decode('utf-8', errors='ignore').strip()
-        except Exception:
-            pass
+            except Exception:
+                writer.close()
+                try:
+                    await writer.wait_closed()
+                except Exception:
+                    pass
+                return {"port": port, "state": "closed", "service": meta["service"]}
+        elif port in [80, 8080]:
+            try:
+                banner_bytes = await asyncio.wait_for(reader.read(128), timeout=0.5)
+                if banner_bytes:
+                    banner = banner_bytes.decode('utf-8', errors='ignore').strip()
+            except Exception:
+                pass
+
         writer.close()
         try:
             await writer.wait_closed()
