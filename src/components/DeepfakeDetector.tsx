@@ -207,7 +207,7 @@ export default function DeepfakeDetector() {
               </div>
               <div>
                 <p className="font-bold text-primary text-sm">Hugging Face model is analyzing the image...</p>
-                <p className="text-foreground/40 text-xs mt-0.5">Ateeqq/ai-vs-human-image-detector scanning for artificial patterns and artifacts</p>
+                <p className="text-foreground/40 text-xs mt-0.5">Smogy/SMOGY-Ai-images-detector scanning for artificial patterns and artifacts</p>
               </div>
             </motion.div>
           )}

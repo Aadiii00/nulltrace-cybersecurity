@@ -31,8 +31,8 @@ detector = None
 try:
     from PIL import Image
     from transformers import pipeline
-    print("[Nulltrace] Loading image deepfake model (Ateeqq/ai-vs-human-image-detector)...")
-    detector = pipeline("image-classification", model="Ateeqq/ai-vs-human-image-detector")
+    print("[Nulltrace] Loading image deepfake model (Smogy/SMOGY-Ai-images-detector)...")
+    detector = pipeline("image-classification", model="Smogy/SMOGY-Ai-images-detector")
     print("[Nulltrace] OK Image deepfake model loaded.")
 except Exception as e:
     print(f"[Nulltrace] WARN Image deepfake model NOT loaded (transformers/pillow missing): {e}")
@@ -53,13 +53,13 @@ async def detect_image(image: UploadFile = File(...)):
         pil_image = PILImage.open(io.BytesIO(image_bytes))
         results = detector(pil_image)
         best = max(results, key=lambda x: x["score"])
-        label = best["label"].lower()
+        label_clean = best["label"].lower()
         score = best["score"] * 100
-        is_ai = (label == "ai")
+        is_ai = any(kw in label_clean for kw in ["ai", "fake", "synthetic", "generated", "artificial", "smogy"]) and not ("real" in label_clean or "human" in label_clean)
         return {
             "type": "AI_GENERATED" if is_ai else "REAL",
             "confidence": round(score, 2),
-            "reason": f"Local model (Ateeqq/ai-vs-human-image-detector) classified this as {'AI-generated' if is_ai else 'human-created (real)'}.",
+            "reason": f"Local model (Smogy/SMOGY-Ai-images-detector) classified this as {'AI-generated' if is_ai else 'human-created (real)'}.",
             "provider": "Hugging Face Local"
         }
     except Exception as err:

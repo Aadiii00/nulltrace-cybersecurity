@@ -28,7 +28,7 @@ The world's first integrated voice threat detection system:
 
 ### 🖼️ AI Image Detector (Vision Forensic)
 Aggressive classification of images to identify AI-generated content:
-- **AI vs Human Classifier:** Powered by **Hugging Face (Ateeqq/ai-vs-human-image-detector)** running locally via `transformers` library.
+- **AI vs Human Classifier:** Powered by **Hugging Face (Smogy/SMOGY-Ai-images-detector)** running locally via `transformers` library.
 - **Visual Fallback:** Falls back to **Groq Vision** if local inference is unavailable.
 - **Confidence Scoring:** Returns a precise probability of AI generation vs human creation.
 
@@ -51,7 +51,7 @@ Zero-friction security:
 | **Framework** | [Next.js 15+](https://nextjs.org/) (App Router, Server Actions) |
 | **Styling** | [Tailwind CSS 4](https://tailwindcss.com/) + [Framer Motion](https://www.framer.com/motion/) |
 | **Database & Auth** | [Supabase](https://supabase.com/) (PostgreSQL, SSR Auth) |
-| **Local Inference (Vision)** | [Hugging Face](https://huggingface.co/) (Ateeqq/ai-vs-human-image-detector via local `transformers` pipeline) |
+| **Local Inference (Vision)** | [Hugging Face](https://huggingface.co/) (Smogy/SMOGY-Ai-images-detector via local `transformers` pipeline) |
 | **Fallback Inference (Vision)** | [Groq](https://groq.com/) (Llama-3-Vision / Scout) |
 | **Inference (Logic)** | [Google Gemini 2.0 Flash](https://ai.google.dev/) (Cyber Sentinel Engine) |
 | **Speech-to-Text** | [Deepgram Nova-2](https://deepgram.com/) |

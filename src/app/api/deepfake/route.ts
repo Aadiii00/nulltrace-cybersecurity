@@ -53,8 +53,8 @@ export async function POST(req: Request) {
         isAIGenerated: hfData.type === 'AI_GENERATED',
         confidence: hfData.confidence,
         reason: hfData.reason || (hfData.type === 'AI_GENERATED'
-          ? 'Deep analysis via Hugging Face (Ateeqq/ai-vs-human-image-detector) flagged this image as AI-generated.'
-          : 'Deep analysis via Hugging Face (Ateeqq/ai-vs-human-image-detector) classified this image as a human-created photograph.')
+          ? 'Deep analysis via Hugging Face (Smogy/SMOGY-Ai-images-detector) flagged this image as AI-generated.'
+          : 'Deep analysis via Hugging Face (Smogy/SMOGY-Ai-images-detector) classified this image as a human-created photograph.')
       };
     } catch (err) {
       console.warn("Primary AI backend failed. Falling back to Groq Vision...", err);

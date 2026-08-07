@@ -45,7 +45,7 @@ To ensure 100% uptime, the application intelligently routes analysis through dif
 1. A user uploads an image on the Dashboard.
 2. Next.js (`src/app/api/deepfake/route.ts`) receives the image and uploads a permanent copy to **Supabase Storage**.
 3. It tries to send the image to a local **Python FastAPI** worker (`backend/main.py`).
-4. The Python worker runs the Hugging Face `transformers` library locally, classifying the image using `Ateeqq/ai-vs-human-image-detector`.
+4. The Python worker runs the Hugging Face `transformers` library locally, classifying the image using `Smogy/SMOGY-Ai-images-detector`.
 5. **The Fallback Safety Net**: If the local Python worker fails, the Next.js API gracefully catches the failure and immediately sends the image to **Groq Vision** as a fallback. 
 6. A record of the scan (with the image URL) is saved to the database. If it's an AI-generated image, an automated webhook is fired to **Make.com/n8n** for alerting.
 
