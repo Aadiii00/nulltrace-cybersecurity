@@ -1,7 +1,8 @@
 "use client";
 
+import { useState } from "react";
 import { motion } from "framer-motion";
-import { ShieldAlert, CheckCircle2, AlertTriangle, HelpCircle, Info } from "lucide-react";
+import { ShieldAlert, CheckCircle2, AlertTriangle, HelpCircle, Info, Download, Copy, Check } from "lucide-react";
 import { clsx, type ClassValue } from "clsx";
 import { twMerge } from "tailwind-merge";
 
@@ -12,6 +13,8 @@ function cn(...inputs: ClassValue[]) {
 }
 
 export default function ResultCard({ data }: { data: ThreatAnalysis }) {
+  const [copied, setCopied] = useState(false);
+
   const getRiskColor = (level: string) => {
     switch (level.toLowerCase()) {
       case "low": return "text-green-400 border-green-400/30 bg-green-400/10 neon-border";
@@ -20,6 +23,127 @@ export default function ResultCard({ data }: { data: ThreatAnalysis }) {
       case "critical": return "text-red-400 border-red-400/30 bg-red-400/10 danger-pulse";
       default: return "text-primary border-primary/30 bg-primary/10 neon-border";
     }
+  };
+
+  const handleShare = async () => {
+    const summary = `🛡️ NULLTRACE THREAT INTELLIGENCE REPORT
+Risk Level: ${data.riskLevel.toUpperCase()}
+Trust Score: ${data.trustScore}/100
+Intent Classification: ${data.intent.toUpperCase()}
+Emotional Tone: ${data.emotion}
+
+Summary:
+${data.analysis}
+
+Flagged Elements:
+${data.riskyParts && data.riskyParts.length > 0 ? data.riskyParts.join(", ") : "None"}
+`;
+    try {
+      await navigator.clipboard.writeText(summary);
+      setCopied(true);
+      setTimeout(() => setCopied(false), 2000);
+    } catch (e) {
+      console.error("Failed to copy report", e);
+    }
+  };
+
+  const handleDownloadPdf = () => {
+    const iframe = document.createElement("iframe");
+    iframe.style.position = "fixed";
+    iframe.style.right = "0";
+    iframe.style.bottom = "0";
+    iframe.style.width = "0";
+    iframe.style.height = "0";
+    iframe.style.border = "none";
+    document.body.appendChild(iframe);
+
+    const doc = iframe.contentWindow?.document || iframe.contentDocument;
+    if (!doc) return;
+
+    const riskBadgeColor = 
+      data.riskLevel.toLowerCase() === "critical" ? "#ef4444" : 
+      data.riskLevel.toLowerCase() === "high" ? "#f97316" : 
+      data.riskLevel.toLowerCase() === "medium" ? "#eab308" : "#22c55e";
+
+    const reportHtml = `
+      <!DOCTYPE html>
+      <html>
+        <head>
+          <title>Nulltrace Cyber Threat Report - ${Date.now()}</title>
+          <style>
+            body { font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif; color: #0f172a; padding: 40px; margin: 0; line-height: 1.6; }
+            .header { display: flex; justify-content: space-between; align-items: center; border-bottom: 2px solid #0ea5e9; padding-bottom: 20px; margin-bottom: 30px; }
+            .brand { font-size: 26px; font-weight: 800; color: #0f172a; letter-spacing: -0.5px; }
+            .brand span { color: #0ea5e9; }
+            .badge { padding: 6px 16px; border-radius: 9999px; font-size: 13px; font-weight: 700; color: white; background: ${riskBadgeColor}; text-transform: uppercase; }
+            .title { font-size: 28px; font-weight: 800; color: #0f172a; margin: 0 0 10px 0; }
+            .meta-grid { display: grid; grid-template-cols: 1fr 1fr 1fr; gap: 15px; margin-bottom: 30px; }
+            .meta-item { background: #f8fafc; padding: 15px; border-radius: 12px; border: 1px solid #e2e8f0; }
+            .meta-label { font-size: 11px; text-transform: uppercase; font-weight: 700; color: #64748b; letter-spacing: 0.5px; }
+            .meta-val { font-size: 18px; font-weight: 700; color: #0f172a; margin-top: 5px; }
+            .section-title { font-size: 16px; font-weight: 700; color: #0f172a; text-transform: uppercase; margin-bottom: 12px; border-bottom: 1px solid #f1f5f9; padding-bottom: 6px; }
+            .summary-box { background: #f0f9ff; border-left: 4px solid #0ea5e9; padding: 20px; border-radius: 0 12px 12px 0; margin-bottom: 30px; font-size: 15px; }
+            .risky-box { background: #fef2f2; border: 1px solid #fecaca; padding: 20px; border-radius: 12px; margin-bottom: 30px; }
+            .risky-tag { display: inline-block; background: #fee2e2; color: #991b1b; padding: 4px 10px; border-radius: 6px; font-family: monospace; font-size: 12px; margin: 3px; border: 1px solid #fca5a5; }
+            .footer { margin-top: 50px; text-align: center; font-size: 12px; color: #94a3b8; border-top: 1px solid #e2e8f0; padding-top: 20px; }
+          </style>
+        </head>
+        <body>
+          <div class="header">
+            <div class="brand">🛡️ NULLTRACE <span>SENTINEL</span></div>
+            <div class="badge">${data.riskLevel} RISK DETECTED</div>
+          </div>
+
+          <h1 class="title">Threat Intelligence Report</h1>
+          <p style="color: #64748b; font-size: 14px; margin-top: -5px; margin-bottom: 25px;">
+            Generated on ${new Date().toLocaleString()} by Nulltrace Cyber Sentinel AI Engine
+          </p>
+
+          <div class="meta-grid">
+            <div class="meta-item">
+              <div class="meta-label">Trust Score</div>
+              <div class="meta-val">${data.trustScore} / 100</div>
+            </div>
+            <div class="meta-item">
+              <div class="meta-label">AI Intent</div>
+              <div class="meta-val" style="text-transform: uppercase;">${data.intent}</div>
+            </div>
+            <div class="meta-item">
+              <div class="meta-label">Emotional Tone</div>
+              <div class="meta-val">${data.emotion || "N/A"}</div>
+            </div>
+          </div>
+
+          <div class="section-title">Forensic Analysis Summary</div>
+          <div class="summary-box">
+            ${data.analysis}
+          </div>
+
+          <div class="section-title">Risky Elements & Threat Indicators</div>
+          <div class="risky-box">
+            ${
+              data.riskyParts && data.riskyParts.length > 0
+                ? data.riskyParts.map(part => `<span class="risky-tag">${part}</span>`).join(" ")
+                : `<em style="color: #64748b;">No specific high-risk text snippets flagged.</em>`
+            }
+          </div>
+
+          <div class="footer">
+            Confidential Threat Intelligence Document • Generated by Nulltrace AI Security System
+          </div>
+        </body>
+      </html>
+    `;
+
+    doc.open();
+    doc.write(reportHtml);
+    doc.close();
+
+    setTimeout(() => {
+      iframe.contentWindow?.focus();
+      iframe.contentWindow?.print();
+      setTimeout(() => iframe.remove(), 1000);
+    }, 250);
   };
 
   return (
@@ -154,8 +278,29 @@ export default function ResultCard({ data }: { data: ThreatAnalysis }) {
               </span>
             </div>
             <div className="flex space-x-3">
-              <button className="px-6 py-2 rounded-xl bg-white/5 hover:bg-white/10 text-sm font-bold transition-colors font-display uppercase tracking-widest neon-border hover:neon-text">Share Report</button>
-              <button className="cyber-button px-6 py-2 rounded-xl text-sm font-bold font-display uppercase tracking-widest">Download PDF</button>
+              <button 
+                onClick={handleShare}
+                className="px-6 py-2 rounded-xl bg-white/5 hover:bg-white/10 text-sm font-bold transition-colors font-display uppercase tracking-widest neon-border hover:neon-text flex items-center space-x-2 cursor-pointer"
+              >
+                {copied ? (
+                  <>
+                    <Check className="w-4 h-4 text-green-400" />
+                    <span className="text-green-400">Copied!</span>
+                  </>
+                ) : (
+                  <>
+                    <Copy className="w-4 h-4" />
+                    <span>Share Report</span>
+                  </>
+                )}
+              </button>
+              <button 
+                onClick={handleDownloadPdf}
+                className="cyber-button px-6 py-2 rounded-xl text-sm font-bold font-display uppercase tracking-widest flex items-center space-x-2 cursor-pointer hover:brightness-110 active:scale-95 transition-all"
+              >
+                <Download className="w-4 h-4" />
+                <span>Download PDF</span>
+              </button>
             </div>
           </div>
         </div>
