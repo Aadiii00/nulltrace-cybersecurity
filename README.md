@@ -1,113 +1,430 @@
-# 🛡️ Nulltrace — Cyber Sentinel Intelligence
+<div align="center">
 
-**Nulltrace** is a state-of-the-art, AI-powered threat intelligence ecosystem designed to detect, analyze, and neutralize modern digital threats. From sophisticated phishing attempts and fake job offers to deepfake image detection and voice-based social engineering, Nulltrace provides a multi-modal defense layer for the digital age.
+# 🛡️ NullTrace
+### AI-Powered Cyber Threat Intelligence & SOC Investigation Platform
 
-[![Next.js](https://img.shields.io/badge/Next.js-15+-black?style=for-the-badge&logo=next.js)](https://nextjs.org/)
-[![Tailwind CSS](https://img.shields.io/badge/Tailwind_4-38B2AC?style=for-the-badge&logo=tailwind-css)](https://tailwindcss.com/)
-[![Groq](https://img.shields.io/badge/Groq-AI-orange?style=for-the-badge)](https://groq.com/)
-[![Supabase](https://img.shields.io/badge/Supabase-Database-3ECF8E?style=for-the-badge&logo=supabase)](https://supabase.com/)
+Detect • Investigate • Correlate • Respond
 
-![Nulltrace Banner](https://images.unsplash.com/photo-1550751827-4bd374c3f58b?auto=format&fit=crop&q=80&w=2070)
+<img src="https://img.shields.io/badge/Next.js-15-black?style=for-the-badge&logo=next.js"/>
+<img src="https://img.shields.io/badge/React-19-61DAFB?style=for-the-badge&logo=react"/>
+<img src="https://img.shields.io/badge/TypeScript-3178C6?style=for-the-badge&logo=typescript"/>
+<img src="https://img.shields.io/badge/Supabase-3ECF8E?style=for-the-badge&logo=supabase"/>
+<img src="https://img.shields.io/badge/Python-AI-3776AB?style=for-the-badge&logo=python"/>
+<img src="https://img.shields.io/badge/MITRE-ATT%26CK-red?style=for-the-badge"/>
 
----
-
-## ✨ Key Features
-
-### 🕵️ Intelligence Dashboard
-A high-performance hub for real-time threat analysis:
-- **Spam & Phishing Scanner:** Advanced heuristic and AI analysis for URLs and messages.
-- **Fake Job Verifier:** Validates recruitment offers against known fraud vectors.
-- **OTP Scam Shield:** Detects psychological pressure tactics used in credential theft.
-- **Screenshot OCR:** Scan WhatsApp, Instagram, or Email screenshots for hidden threats using Tesseract.js.
-
-### 🎙️ Voice Sentinel (Forensic Audio Analysis)
-The world's first integrated voice threat detection system:
-- **Neural Transcription:** Powered by **Deepgram Nova-2** for near-perfect accuracy.
-- **Sentiment & Intent Analysis:** Uses **Groq Llama-3** to identify fear, urgency, and impersonation in voice messages.
-- **Verbatim Indicators:** Highlights exactly which part of the audio sounds suspicious.
-
-### 🖼️ AI Image Detector (Vision Forensic)
-Aggressive classification of images to identify AI-generated content:
-- **AI vs Human Classifier:** Powered by **Hugging Face (Smogy/SMOGY-Ai-images-detector)** running locally via `transformers` library.
-- **Visual Fallback:** Falls back to **Groq Vision** if local inference is unavailable.
-- **Confidence Scoring:** Returns a precise probability of AI generation vs human creation.
-
-### 🧾 Auto Complaint Generator
-Don't just detect — take action. Nulltrace automatically drafts:
-- **Official Cybercrime Reports:** Pre-formatted for platforms like [cybercrime.gov.in](https://cybercrime.gov.in).
-- **Abuse Emails:** Professional drafts for ISPs, banks, and platform moderators.
-
-### 🧩 Chrome Extension (V3)
-Zero-friction security:
-- **Contextual Scanning:** Right-click any text on the web to send it to the Cyber Sentinel engine.
-- **Overlay Results:** View risk assessments without leaving your current tab.
+</div>
 
 ---
 
-## 🛠️ Modern Tech Stack
+# 📌 Overview
 
-| Layer | Technology |
-|---|---|
-| **Framework** | [Next.js 15+](https://nextjs.org/) (App Router, Server Actions) |
-| **Styling** | [Tailwind CSS 4](https://tailwindcss.com/) + [Framer Motion](https://www.framer.com/motion/) |
-| **Database & Auth** | [Supabase](https://supabase.com/) (PostgreSQL, SSR Auth) |
-| **Local Inference (Vision)** | [Hugging Face](https://huggingface.co/) (Smogy/SMOGY-Ai-images-detector via local `transformers` pipeline) |
-| **Fallback Inference (Vision)** | [Groq](https://groq.com/) (Llama-3-Vision / Scout) |
-| **Inference (Logic)** | [Google Gemini 2.0 Flash](https://ai.google.dev/) (Cyber Sentinel Engine) |
-| **Speech-to-Text** | [Deepgram Nova-2](https://deepgram.com/) |
-| **OCR** | [Tesseract.js](https://tesseract.projectnaptha.com/) |
-| **Automation** | [n8n](https://n8n.io/) / Make.com Webhooks |
+**NullTrace** is an AI-powered Cyber Threat Intelligence and SOC Investigation Platform designed to help security analysts investigate cyber threats from a single dashboard.
+
+Instead of switching between multiple cybersecurity tools, NullTrace combines threat intelligence, website analysis, malware analysis, email intelligence, browser protection, and SOC investigations into one unified platform.
 
 ---
 
-## 🚀 Getting Started
+# 🚀 Key Features
 
-### 1. Requirements
-- **Node.js** v20 or higher
-- **Supabase** Project (for database and authentication)
-- **API Keys:** Groq, Google AI (Gemini), Deepgram
+## 🌐 Website Security Assessment
 
-### 2. Environment Setup
-Create a `.env.local` file:
-```env
-# Supabase
-NEXT_PUBLIC_SUPABASE_URL=your_url
-NEXT_PUBLIC_SUPABASE_ANON_KEY=your_key
+- Website Risk Analysis
+- SSL/TLS Inspection
+- WHOIS Lookup
+- DNS Intelligence
+- Redirect Chain Analysis
+- Security Headers
+- Domain Reputation
+- AI Risk Scoring
 
-# AI Services
-GEMINI_API_KEY=your_gemini_key
-GROQ_API_KEY=your_groq_key
-DEEPGRAM_API_KEY=your_deepgram_key
+---
+
+## 🌍 Network Intelligence
+
+- IP Intelligence
+- ASN Lookup
+- Open Port Analysis
+- Geo Location
+- Threat Intelligence
+- IOC Investigation
+- Infrastructure Correlation
+
+---
+
+## 📧 Email Intelligence
+
+- RFC822 Header Analysis
+- SPF/DKIM/DMARC Validation
+- Sender Reputation
+- Phishing Detection
+- URL Extraction
+- Attachment Analysis
+- AI Email Risk Score
+
+---
+
+## 📸 Screenshot Intelligence
+
+Upload any screenshot to detect:
+
+- Fake Login Pages
+- Brand Impersonation
+- Scam Websites
+- OCR Text Extraction
+- QR Code Analysis
+- AI Screenshot Analysis
+
+---
+
+## 🦠 AI Malware Analysis
+
+Upload
+
+- EXE
+- DLL
+- APK
+- PDF
+- Office Files
+- ZIP
+
+Features
+
+- Static Analysis
+- AI Malware Detection
+- MalConv2 Deep Learning
+- YARA Rules
+- MITRE ATT&CK Mapping
+- Malware Family Detection
+- AI Risk Score
+
+---
+
+## 🛡️ AI SOC Investigation Workbench
+
+The central investigation hub.
+
+Features
+
+- IOC Investigation
+- Threat Correlation
+- MITRE ATT&CK Mapping
+- Case Management
+- Evidence Collection
+- Risk Scoring
+- AI Security Assistant
+- Incident Timeline
+- Report Generation
+
+---
+
+## 🔗 Threat Intelligence
+
+Integrated with
+
+- VirusTotal
+- Shodan
+- AbuseIPDB
+- URLScan
+- WHOISXML
+- IPinfo
+- ThreatFox
+- URLHaus
+- OpenPhish
+
+---
+
+## 🧩 Browser Extension
+
+NullTrace Shield
+
+Real-time protection against
+
+- Phishing
+- Fake Websites
+- Scam Pages
+- Brand Impersonation
+- Malicious URLs
+
+Works with
+
+- Chrome
+- Microsoft Edge
+
+---
+
+# 🤖 AI Capabilities
+
+- AI Threat Detection
+- Malware Classification
+- Threat Correlation
+- Risk Prediction
+- OCR Intelligence
+- AI Investigation Assistant
+- Incident Summarization
+- Security Report Generation
+
+---
+
+# 🧠 SOC Investigation Workflow
+
+```text
+Threat Alert
+      │
+      ▼
+Create Investigation Case
+      │
+      ▼
+Collect Evidence
+      │
+      ▼
+IOC Correlation
+      │
+      ▼
+Threat Intelligence
+      │
+      ▼
+MITRE ATT&CK Mapping
+      │
+      ▼
+Risk Scoring
+      │
+      ▼
+AI Recommendations
+      │
+      ▼
+Generate Report
 ```
 
-### 3. Installation
-```bash
-# Install dependencies
-npm install
+---
 
-# Run development server
+# 🏗 Architecture
+
+```text
+                  User
+                    │
+                    ▼
+        NullTrace Dashboard (Next.js)
+                    │
+                    ▼
+          Express.js Backend API
+                    │
+ ┌──────────────────┼──────────────────┐
+ │                  │                  │
+ ▼                  ▼                  ▼
+Threat APIs      AI Engine       Supabase
+ │                  │                  │
+ ▼                  ▼                  ▼
+VirusTotal      LLM + ML        PostgreSQL
+Shodan          OCR             Storage
+IPinfo          Risk Engine
+WHOISXML        MITRE Mapping
+```
+
+---
+
+# ⚙ Tech Stack
+
+## Frontend
+
+- Next.js 15
+- React
+- TypeScript
+- Tailwind CSS
+- ShadCN UI
+- React Flow
+- Recharts
+
+---
+
+## Backend
+
+- Node.js
+- Express.js
+- Python FastAPI
+
+---
+
+## Database
+
+- Supabase PostgreSQL
+- Supabase Storage
+
+---
+
+## AI & ML
+
+- Llama 3.1
+- MalConv2
+- PaddleOCR
+- YOLOv11
+- LightGBM
+- YARA
+- FAISS
+
+---
+
+## Threat Intelligence
+
+- VirusTotal
+- Shodan
+- AbuseIPDB
+- URLScan
+- WHOISXML
+- IPinfo
+- ThreatFox
+- URLHaus
+
+---
+
+## Security
+
+- MITRE ATT&CK
+- OWASP Top 10
+- IOC Correlation
+- Risk Engine
+
+---
+
+# 📊 Risk Scoring
+
+Each module generates its own intelligent risk score.
+
+Example
+
+```text
+Website Risk        62
+
+Network Risk        74
+
+Email Risk          81
+
+Malware Risk        95
+
+Screenshot Risk     88
+
+Overall SOC Score   91
+```
+
+---
+
+# 📑 Reports
+
+Generate
+
+- PDF Reports
+- JSON Reports
+- CSV Reports
+
+Includes
+
+- IOC Details
+- MITRE Mapping
+- Threat Intelligence
+- AI Summary
+- Recommendations
+
+---
+
+# 🛠 Installation
+
+Clone
+
+```bash
+git clone https://github.com/yourusername/nulltrace.git
+```
+
+Install
+
+```bash
+npm install
+```
+
+Run
+
+```bash
 npm run dev
 ```
 
----
+Backend
 
-## 📂 Project Navigation
-```text
-├── src/
-│   ├── app/
-│   │   ├── api/          # AI logic (analyze, deepfake, transcribe)
-│   │   ├── dashboard/    # Main user interface
-│   │   └── transcribe/   # Voice Sentinel UI
-│   ├── components/       # Premium UI components
-│   ├── lib/              # Core logic & external services
-│   └── types/            # TypeScript schemas
-├── extension/            # Chrome Extension source
-└── public/               # Global assets
+```bash
+cd backend
+
+npm install
+
+npm start
+```
+
+Python AI Engine
+
+```bash
+pip install -r requirements.txt
+
+uvicorn app:app --reload
 ```
 
 ---
 
-<p align="center">
-  <b>Built for a safer internet by the Nulltrace Team.</b><br>
-  Powered by Next.js, Groq, and Gemini.
-</p>
+# 🔑 Environment Variables
+
+```env
+NEXT_PUBLIC_SUPABASE_URL=
+
+NEXT_PUBLIC_SUPABASE_ANON_KEY=
+
+VIRUSTOTAL_API_KEY=
+
+SHODAN_API_KEY=
+
+WHOISXML_API_KEY=
+
+URLSCAN_API_KEY=
+
+IPINFO_API_KEY=
+```
+
+---
+
+# 📷 Screenshots
+
+> Add dashboard screenshots here
+
+- Dashboard
+- Website Scanner
+- IOC Investigation
+- MITRE Mapping
+- SOC Workbench
+- AI Malware Analysis
+- Browser Extension
+
+---
+
+# 🛣 Roadmap
+
+- Cloud SIEM Integration
+- SOAR Automation
+- Mobile Application
+- Threat Hunting Dashboard
+- AI Threat Prediction
+- Blockchain Evidence Verification
+- Enterprise Team Collaboration
+
+---
+
+# 🤝 Contributors
+
+Developed with ❤️ by Team Code-Blooded
+
+---
+
+# 📄 License
+
+MIT License
+
+---
+
+<div align="center">
+
+### ⭐ If you found this project useful, consider giving it a star!
+
+</div>
