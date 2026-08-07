@@ -153,6 +153,36 @@ export default function SOCWorkbenchPage() {
   ]);
   const [isAiLoading, setIsAiLoading] = useState(false);
 
+  // Auto-load malware investigation case from sessionStorage
+  useEffect(() => {
+    try {
+      const storedCaseStr = sessionStorage.getItem("nulltrace_soc_create_case");
+      if (storedCaseStr) {
+        sessionStorage.removeItem("nulltrace_soc_create_case");
+        const parsed = JSON.parse(storedCaseStr);
+        const newCase: CaseItem = {
+          id: `CASE-${Math.floor(1000 + Math.random() * 9000)}`,
+          caseNumber: `CASE-${Math.floor(1000 + Math.random() * 9000)}`,
+          title: parsed.title || "Malware Investigation",
+          ioc: parsed.ioc || "SHA256 Hash",
+          status: "Open",
+          severity: parsed.severity || "High",
+          owner: "Tier-1 SOC Analyst",
+          createdDate: new Date().toISOString().replace("T", " ").substring(0, 16) + " UTC",
+          evidence: parsed.evidence || [],
+          notes: parsed.notes || ""
+        };
+        setCases(prev => [newCase, ...prev]);
+        setActiveTab("cases");
+        if (parsed.ioc) {
+          setSearchQuery(parsed.ioc);
+        }
+      }
+    } catch (e) {
+      console.error("Failed to parse SOC case from malware analysis:", e);
+    }
+  }, []);
+
   // Run Investigation
   const handleInvestigate = async (queryToRun?: string) => {
     const q = (queryToRun || searchQuery).trim();

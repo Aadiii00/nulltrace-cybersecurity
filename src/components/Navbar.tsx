@@ -2,7 +2,7 @@
 
 import { useEffect, useState } from "react";
 import { motion } from "framer-motion";
-import { Shield, Zap, LayoutDashboard, Search, Menu, X, Mic, Globe, ChevronDown, ShieldAlert } from "lucide-react";
+import { Shield, Zap, LayoutDashboard, Search, Menu, X, Mic, Globe, ChevronDown, ShieldAlert, Bug } from "lucide-react";
 import Link from "next/link";
 import { supabase } from "@/lib/supabase";
 import { User } from "@supabase/supabase-js";
@@ -31,22 +31,15 @@ export default function Navbar() {
   };
 
   return (
-    <nav className="fixed top-0 inset-x-0 z-50 px-6 py-4">
-      <div className="max-w-7xl mx-auto glass rounded-2xl px-6 py-3 flex items-center justify-between neon-border relative overflow-hidden">
-        {/* Animated Glow Line */}
-        <motion.div 
-          className="absolute bottom-0 left-0 h-[1px] bg-gradient-to-r from-transparent via-primary to-transparent w-full"
-          animate={{ x: ["-100%", "100%"] }}
-          transition={{ duration: 3, repeat: Infinity, ease: "linear" }}
-        />
-
+    <nav className="fixed top-0 left-0 right-0 z-50 glass border-b border-white/5 px-6 py-4">
+      <div className="max-w-7xl mx-auto flex items-center justify-between">
         <div className="flex items-center space-x-8">
           <Link href="/" className="flex items-center space-x-2 group">
-            <div className="w-10 h-10 rounded-xl bg-primary/10 flex items-center justify-center neon-border group-hover:scale-110 transition-transform">
-              <Shield className="w-6 h-6 text-primary fill-current" />
+            <div className="w-10 h-10 rounded-xl bg-primary/10 border border-primary/30 flex items-center justify-center text-primary group-hover:scale-105 transition-transform neon-border">
+              <Shield className="w-6 h-6 neon-text" />
             </div>
-            <span className="text-xl font-display font-bold tracking-tight font-mono">
-              <span className="text-primary/60">[</span>Null<span className="text-primary neon-text">trace</span><span className="text-primary/60">]</span>
+            <span className="font-display font-bold text-xl tracking-wider text-foreground">
+              NULL<span className="text-primary neon-text">TRACE</span>
             </span>
           </Link>
 
@@ -55,6 +48,10 @@ export default function Navbar() {
             <Link href="/dashboard" className="hover:text-primary transition-colors flex items-center space-x-1 hover:neon-border px-2 py-1 rounded">
               <LayoutDashboard className="w-3.5 h-3.5" />
               <span>Dashboard</span>
+            </Link>
+            <Link href="/malware-analysis" className="hover:text-cyan-400 transition-colors flex items-center space-x-1 hover:neon-border px-2 py-1 rounded">
+              <Bug className="w-3.5 h-3.5 text-cyan-400" />
+              <span>AI Malware</span>
             </Link>
             <Link href="/soc-workbench" className="hover:text-cyan-400 transition-colors flex items-center space-x-1 hover:neon-border px-2 py-1 rounded bg-cyan-950/20 text-cyan-400 border border-cyan-500/20">
               <ShieldAlert className="w-3.5 h-3.5 text-cyan-400 animate-pulse" />
@@ -67,10 +64,6 @@ export default function Navbar() {
             <Link href="/subdomain-discovery" className="hover:text-primary transition-colors flex items-center space-x-1 hover:neon-border px-2 py-1 rounded">
               <Globe className="w-3.5 h-3.5 text-primary" />
               <span>Subdomains</span>
-            </Link>
-            <Link href="/voice-detector" className="hover:text-primary transition-colors flex items-center space-x-1 hover:neon-border px-2 py-1 rounded">
-              <Mic className="w-3.5 h-3.5 text-cyan-400" />
-              <span>AI Voice</span>
             </Link>
           </div>
         </div>
@@ -132,9 +125,9 @@ export default function Navbar() {
         >
           <Link href="/tools" className="block text-lg font-medium">Tools Suite</Link>
           <Link href="/dashboard" className="block text-lg font-medium">Analytics Dashboard</Link>
+          <Link href="/malware-analysis" className="block text-lg font-medium text-cyan-400">🦠 AI Malware Analysis</Link>
           <Link href="/community" className="block text-lg font-medium">Threat Feed</Link>
           <Link href="/transcribe" className="block text-lg font-medium">🎙️ Voice Sentinel</Link>
-          <Link href="/voice-detector" className="block text-lg font-medium">🎤 AI Voice Detector</Link>
           <Link href="/subdomain-discovery" className="block text-lg font-medium">🌐 Subdomains</Link>
           <hr className="border-white/5" />
           <div className="grid grid-cols-2 gap-4">

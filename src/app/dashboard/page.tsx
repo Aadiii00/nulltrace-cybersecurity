@@ -22,7 +22,8 @@ import {
   X,
   RefreshCw,
   Mic,
-  FileAudio
+  FileAudio,
+  Bug
 } from "lucide-react";
 import { supabase } from "@/lib/supabase";
 import { User } from "@supabase/supabase-js";
@@ -343,26 +344,23 @@ export default function Dashboard() {
 
         {/* Forensic Engines Grid */}
         <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
-          {/* Card 1: AI Voice Detector */}
+          {/* Card 1: AI Malware Analysis */}
           <div className="glass rounded-[32px] p-8 border-white/5 relative overflow-hidden flex flex-col justify-between group shadow-xl">
             <div className="absolute top-0 right-0 w-32 h-32 bg-cyan-500/5 blur-2xl -z-10 group-hover:scale-150 transition-transform duration-500" />
             <div>
               <div className="flex items-center gap-4 mb-4">
                 <div className="w-12 h-12 rounded-2xl bg-cyan-500/10 flex items-center justify-center border border-cyan-500/20 text-cyan-400">
-                  <Mic className="w-6 h-6" />
+                  <Bug className="w-6 h-6" />
                 </div>
-                <h3 className="text-xl font-display font-bold">🎤 AI Voice Detector</h3>
+                <h3 className="text-xl font-display font-bold">🦠 AI Malware Analysis</h3>
               </div>
               <p className="text-foreground/40 text-sm leading-relaxed mb-6">
-                Detect AI-generated voices, cloned voices and spoofed recordings using deep learning. Identify deepfake audio attacks and digital voice cloning.
+                Upload suspicious files (EXE, DLL, APK, PDF, JS, PS1) for MalConv2 deep neural inspection, PE static analysis, YARA scanning, and MITRE ATT&CK mapping.
               </p>
             </div>
             <div className="flex flex-wrap items-center gap-3">
-              <Link href="/voice-detector?tab=upload" className="bg-cyan-500 text-black px-5 py-2.5 rounded-xl text-xs font-bold uppercase tracking-widest hover:bg-cyan-600 transition-all shadow-md shadow-cyan-500/10">
-                Upload Audio
-              </Link>
-              <Link href="/voice-detector?tab=record" className="bg-white/5 border border-white/10 hover:bg-white/10 px-5 py-2.5 rounded-xl text-xs font-bold uppercase tracking-widest transition-all">
-                Record Audio
+              <Link href="/malware-analysis" className="bg-cyan-500 text-black px-5 py-2.5 rounded-xl text-xs font-bold uppercase tracking-widest hover:bg-cyan-600 transition-all shadow-md shadow-cyan-500/10">
+                Analyze Binary
               </Link>
             </div>
           </div>
