@@ -1,0 +1,427 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>Nulltrace Sentinel — Settings</title>
+  <style>
+    @import url('https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;800&display=swap');
+
+    *, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
+
+    :root {
+      --bg: #080d1a;
+      --bg2: #0d1628;
+      --border: rgba(255,255,255,0.08);
+      --accent: #00d4ff;
+      --text: #e2e8f0;
+      --text-dim: rgba(255,255,255,0.4);
+      --danger: #ff6b6b;
+      --success: #00e676;
+      --warning: #f0c400;
+    }
+
+    body {
+      font-family: 'Inter', system-ui, sans-serif;
+      background: var(--bg);
+      color: var(--text);
+      min-height: 100vh;
+      padding: 32px 16px 48px;
+    }
+
+    .container { max-width: 580px; margin: 0 auto; }
+
+    .header {
+      display: flex;
+      align-items: center;
+      gap: 14px;
+      margin-bottom: 28px;
+      padding-bottom: 20px;
+      border-bottom: 1px solid var(--border);
+    }
+
+    .logo {
+      width: 44px;
+      height: 44px;
+      background: linear-gradient(135deg, #00d4ff, #7c3aed);
+      border-radius: 12px;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      font-size: 22px;
+      box-shadow: 0 6px 20px rgba(0, 212, 255, 0.25);
+      flex-shrink: 0;
+    }
+
+    .header h1 { font-size: 18px; font-weight: 800; color: #00d4ff; letter-spacing: 1px; }
+    .header p { font-size: 11px; color: var(--text-dim); margin-top: 2px; }
+
+    /* API KEY — Featured section */
+    .api-key-section {
+      background: linear-gradient(135deg, rgba(0,212,255,0.06), rgba(124,58,237,0.06));
+      border: 1px solid rgba(0, 212, 255, 0.25);
+      border-radius: 16px;
+      padding: 20px;
+      margin-bottom: 20px;
+    }
+
+    .api-key-header {
+      display: flex;
+      align-items: center;
+      gap: 10px;
+      margin-bottom: 14px;
+    }
+
+    .api-key-icon {
+      width: 32px;
+      height: 32px;
+      background: rgba(0, 212, 255, 0.1);
+      border-radius: 8px;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      font-size: 16px;
+    }
+
+    .api-key-label { font-size: 14px; font-weight: 700; color: var(--accent); }
+    .api-key-desc { font-size: 11px; color: var(--text-dim); margin-top: 1px; }
+
+    .api-key-input-row {
+      display: flex;
+      gap: 8px;
+      margin-bottom: 10px;
+    }
+
+    .api-key-input {
+      flex: 1;
+      background: rgba(0,0,0,0.3);
+      border: 1px solid rgba(0, 212, 255, 0.2);
+      border-radius: 10px;
+      padding: 10px 14px;
+      color: var(--text);
+      font-size: 13px;
+      font-family: 'Courier New', monospace;
+      outline: none;
+      transition: border-color 0.15s;
+    }
+
+    .api-key-input:focus {
+      border-color: rgba(0, 212, 255, 0.5);
+      background: rgba(0, 212, 255, 0.04);
+    }
+
+    .api-key-input::placeholder { color: var(--text-dim); font-family: inherit; }
+
+    .btn-test-key {
+      padding: 10px 16px;
+      background: rgba(0, 212, 255, 0.1);
+      color: var(--accent);
+      border: 1px solid rgba(0, 212, 255, 0.2);
+      border-radius: 10px;
+      font-size: 12px;
+      font-weight: 600;
+      cursor: pointer;
+      font-family: inherit;
+      white-space: nowrap;
+      transition: all 0.15s;
+    }
+
+    .btn-test-key:hover {
+      background: rgba(0, 212, 255, 0.18);
+    }
+
+    .key-status {
+      font-size: 11px;
+      padding: 6px 10px;
+      border-radius: 6px;
+      display: none;
+    }
+
+    .key-status.ok { background: rgba(0, 230, 118, 0.1); color: var(--success); border: 1px solid rgba(0,230,118,0.2); display: block; }
+    .key-status.err { background: rgba(255, 107, 107, 0.1); color: var(--danger); border: 1px solid rgba(255,107,107,0.2); display: block; }
+    .key-status.warn { background: rgba(240, 196, 0, 0.1); color: var(--warning); border: 1px solid rgba(240,196,0,0.2); display: block; }
+
+    .get-key-link {
+      font-size: 11px;
+      color: rgba(0,212,255,0.6);
+      text-decoration: none;
+      display: inline-flex;
+      align-items: center;
+      gap: 4px;
+      margin-top: 6px;
+      transition: color 0.15s;
+    }
+    .get-key-link:hover { color: var(--accent); }
+
+    /* Regular sections */
+    .section {
+      background: rgba(255,255,255,0.03);
+      border: 1px solid var(--border);
+      border-radius: 14px;
+      padding: 18px;
+      margin-bottom: 16px;
+    }
+
+    .section-title {
+      font-size: 10px;
+      font-weight: 700;
+      letter-spacing: 2px;
+      color: var(--text-dim);
+      text-transform: uppercase;
+      margin-bottom: 14px;
+    }
+
+    .setting-row {
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      padding: 11px 0;
+      border-bottom: 1px solid rgba(255,255,255,0.04);
+      gap: 16px;
+    }
+
+    .setting-row:last-child { border-bottom: none; }
+
+    .setting-info { flex: 1; }
+    .setting-label { font-size: 13px; font-weight: 600; color: var(--text); margin-bottom: 2px; }
+    .setting-desc { font-size: 11px; color: var(--text-dim); line-height: 1.4; }
+
+    /* Toggle */
+    .toggle-wrap {
+      position: relative;
+      width: 44px;
+      height: 24px;
+      flex-shrink: 0;
+    }
+
+    .toggle-wrap input { opacity: 0; width: 0; height: 0; }
+
+    .toggle-track {
+      position: absolute;
+      inset: 0;
+      background: rgba(255,255,255,0.1);
+      border-radius: 24px;
+      cursor: pointer;
+      transition: background 0.2s;
+      border: 1px solid var(--border);
+    }
+
+    .toggle-track::after {
+      content: '';
+      position: absolute;
+      width: 18px;
+      height: 18px;
+      left: 2px;
+      top: 2px;
+      background: white;
+      border-radius: 50%;
+      transition: transform 0.2s;
+      box-shadow: 0 1px 4px rgba(0,0,0,0.4);
+    }
+
+    .toggle-wrap input:checked + .toggle-track {
+      background: linear-gradient(135deg, #00d4ff, #7c3aed);
+      border-color: transparent;
+    }
+
+    .toggle-wrap input:checked + .toggle-track::after {
+      transform: translateX(20px);
+    }
+
+    .setting-input {
+      background: rgba(255,255,255,0.05);
+      border: 1px solid var(--border);
+      border-radius: 8px;
+      padding: 6px 10px;
+      color: var(--text);
+      font-size: 13px;
+      font-family: inherit;
+      outline: none;
+      width: 75px;
+      text-align: center;
+      transition: border-color 0.15s;
+    }
+
+    .setting-input:focus { border-color: rgba(0, 212, 255, 0.4); }
+
+    .url-input {
+      width: 195px;
+      text-align: left;
+      font-family: monospace;
+      font-size: 12px;
+    }
+
+    /* Save row */
+    .save-row {
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      margin-top: 4px;
+      gap: 12px;
+    }
+
+    .btn-save {
+      padding: 11px 28px;
+      background: linear-gradient(135deg, #00d4ff, #0099cc);
+      color: #000;
+      border: none;
+      border-radius: 10px;
+      font-size: 13px;
+      font-weight: 700;
+      cursor: pointer;
+      font-family: inherit;
+      transition: all 0.15s;
+    }
+
+    .btn-save:hover {
+      background: linear-gradient(135deg, #22e0ff, #00b5e8);
+      transform: translateY(-1px);
+      box-shadow: 0 4px 16px rgba(0, 212, 255, 0.3);
+    }
+
+    .btn-danger {
+      padding: 10px 18px;
+      background: rgba(255, 107, 107, 0.1);
+      color: var(--danger);
+      border: 1px solid rgba(255, 107, 107, 0.2);
+      border-radius: 10px;
+      font-size: 12px;
+      font-weight: 600;
+      cursor: pointer;
+      font-family: inherit;
+      transition: all 0.15s;
+    }
+
+    .btn-danger:hover { background: rgba(255, 107, 107, 0.2); }
+
+    .feedback {
+      font-size: 12px;
+      color: var(--success);
+      opacity: 0;
+      transition: opacity 0.3s;
+      flex: 1;
+      text-align: right;
+    }
+
+    .feedback.show { opacity: 1; }
+
+    .version-info {
+      text-align: center;
+      font-size: 10px;
+      color: var(--text-dim);
+      margin-top: 28px;
+      letter-spacing: 1px;
+    }
+  </style>
+</head>
+<body>
+  <div class="container">
+    <div class="header">
+      <div class="logo">🛡️</div>
+      <div>
+        <h1>NULLTRACE SENTINEL</h1>
+        <p>Extension Settings & API Configuration</p>
+      </div>
+    </div>
+
+    <!-- ★ GROQ API KEY — most important setting ★ -->
+    <div class="api-key-section">
+      <div class="api-key-header">
+        <div class="api-key-icon">🔑</div>
+        <div>
+          <div class="api-key-label">Groq API Key</div>
+          <div class="api-key-desc">Required for AI-powered threat analysis on all websites</div>
+        </div>
+      </div>
+
+      <div class="api-key-input-row">
+        <input
+          type="password"
+          id="s-groq-key"
+          class="api-key-input"
+          placeholder="gsk_..."
+          autocomplete="off"
+          spellcheck="false"
+        />
+        <button class="btn-test-key" id="btn-test-key">Test Key</button>
+      </div>
+
+      <div class="key-status" id="key-status"></div>
+
+      <a class="get-key-link" href="https://console.groq.com/keys" target="_blank">
+        🔗 Get a free Groq API key at console.groq.com
+      </a>
+    </div>
+
+    <!-- Scanning Settings -->
+    <div class="section">
+      <div class="section-title">Scanning Behavior</div>
+
+      <div class="setting-row">
+        <div class="setting-info">
+          <div class="setting-label">Auto-scan selected text</div>
+          <div class="setting-desc">Show scan popup when you select text on any page</div>
+        </div>
+        <label class="toggle-wrap">
+          <input type="checkbox" id="s-autoscan" checked />
+          <div class="toggle-track"></div>
+        </label>
+      </div>
+
+      <div class="setting-row">
+        <div class="setting-info">
+          <div class="setting-label">Show floating panel automatically</div>
+          <div class="setting-desc">Display results panel immediately after analysis</div>
+        </div>
+        <label class="toggle-wrap">
+          <input type="checkbox" id="s-show-panel" checked />
+          <div class="toggle-track"></div>
+        </label>
+      </div>
+
+      <div class="setting-row">
+        <div class="setting-info">
+          <div class="setting-label">Minimum selection length</div>
+          <div class="setting-desc">Characters required to trigger scan popup</div>
+        </div>
+        <input type="number" id="s-min-length" class="setting-input" value="5" min="5" max="200" />
+      </div>
+    </div>
+
+    <!-- Backend Settings -->
+    <div class="section">
+      <div class="section-title">Backend (Optional)</div>
+
+      <div class="setting-row">
+        <div class="setting-info">
+          <div class="setting-label">Fallback Backend URL</div>
+          <div class="setting-desc">Used if Groq key is not set. Run <code style="color:#00d4ff">npm run dev</code></div>
+        </div>
+        <input type="text" id="s-backend-url" class="setting-input url-input" value="http://localhost:3000" />
+      </div>
+    </div>
+
+    <!-- Data Management -->
+    <div class="section">
+      <div class="section-title">Data</div>
+      <div class="setting-row">
+        <div class="setting-info">
+          <div class="setting-label">Scan History</div>
+          <div class="setting-desc">Clear all saved scan results from this device</div>
+        </div>
+        <button class="btn-danger" id="btn-clear">Clear History</button>
+      </div>
+    </div>
+
+    <!-- Save Row -->
+    <div class="save-row">
+      <button class="btn-save" id="btn-save">💾 Save Settings</button>
+      <span class="feedback" id="feedback">✓ Settings saved!</span>
+    </div>
+
+    <div class="version-info">Nulltrace Sentinel v1.1.0 · Direct Groq Integration</div>
+  </div>
+
+  <script src="options.js"></script>
+</body>
+</html>

@@ -1,0 +1,91 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>Nulltrace Sentinel</title>
+  <link rel="stylesheet" href="popup.css" />
+</head>
+<body>
+  <div id="app">
+    <!-- Header -->
+    <header id="header">
+      <div id="logo-group">
+        <div id="logo-icon">🛡️</div>
+        <div id="logo-text">
+          <div id="brand-name">NULLTRACE</div>
+          <div id="brand-sub">SENTINEL</div>
+        </div>
+      </div>
+      <div id="header-right">
+        <div id="status-indicator" class="status-dot status-ok" title="Backend status"></div>
+        <a href="../options/options.html" target="_blank" id="settings-btn" title="Settings">⚙️</a>
+      </div>
+    </header>
+
+    <!-- Platform Badge -->
+    <div id="platform-banner" style="display:none">
+      <span id="platform-emoji"></span>
+      <span id="platform-label"></span>
+    </div>
+
+    <!-- Quick Controls -->
+    <div id="quick-controls">
+      <div id="autoscan-row">
+        <div id="autoscan-info">
+          <div id="autoscan-label">Auto-Scan Selections</div>
+          <div id="autoscan-desc">Scan selected text automatically</div>
+        </div>
+        <label class="toggle-switch" id="autoscan-toggle-wrap">
+          <input type="checkbox" id="autoscan-toggle" checked />
+          <span class="toggle-knob"></span>
+        </label>
+      </div>
+    </div>
+
+    <!-- Action Buttons -->
+    <div id="action-buttons">
+      <button id="btn-scan-page" class="btn btn-primary">
+        <span>🔍</span> Scan Page
+      </button>
+      <button id="btn-open-history" class="btn btn-secondary">
+        <span>📋</span> History
+      </button>
+    </div>
+
+    <!-- URL Input (Quick scan) -->
+    <div id="url-scan-section">
+      <div id="url-scan-label">Quick URL Scan</div>
+      <div id="url-input-row">
+        <input type="text" id="url-input" placeholder="Paste a URL to analyze..." />
+        <button id="btn-scan-url" title="Analyze URL">→</button>
+      </div>
+    </div>
+
+
+
+    <!-- Status / Scanning indicator -->
+    <div id="scan-status" style="display:none">
+      <div class="mini-spinner"></div>
+      <span id="scan-status-text">Analyzing...</span>
+    </div>
+
+    <!-- Recent Scans / Threats / Safe Sites -->
+    <div id="recent-section">
+      <div id="recent-header">
+        <div class="popup-tabs">
+          <button class="popup-tab active" id="tab-scans">Scans</button>
+          <button class="popup-tab" id="tab-threats">Threats</button>
+          <button class="popup-tab" id="tab-safe">Safe Sites</button>
+        </div>
+        <button id="btn-clear-history" title="Clear history">🗑</button>
+      </div>
+      <div id="recent-list">
+        <div class="empty-state">No scans yet. Select text on any page to begin.</div>
+      </div>
+    </div>
+  </div>
+
+  <script src="popup.js"></script>
+</body>
+</html>

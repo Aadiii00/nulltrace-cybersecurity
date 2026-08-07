@@ -1,12 +1,18 @@
 const { createServerClient } = require('@supabase/ssr');
-require('dotenv').config({ path: '.env.local' });
+const fs = require('fs');
+const env = fs.readFileSync('.env.local', 'utf8');
+env.split('\n').forEach(line => {
+  const parts = line.split('=');
+  if (parts.length >= 2) {
+    process.env[parts[0].trim()] = parts.slice(1).join('=').trim();
+  }
+});
 
 async function test() {
   try {
     console.log('Testing Supabase Client Creation...');
     console.log('URL:', process.env.NEXT_PUBLIC_SUPABASE_URL);
     
-    // Stub cookies for test
     const stubCookies = {
       getAll: () => [],
       setAll: () => {}
@@ -18,15 +24,12 @@ async function test() {
       { cookies: stubCookies }
     );
 
-    console.log('Attempting to fetch session...');
-    const { data, error } = await supabase.auth.getSession();
-    if (error) throw error;
-    console.log('Session fetched successfully (or empty if no session).');
-
-    console.log('Attempting to query scans table...');
-    const { data: scans, error: scansError } = await supabase.from('scans').select('*').limit(1);
-    if (scansError) throw scansError;
-    console.log('Successfully queried scans table. Data:', scans);
+    console.log('Attempting to query table info...');
+    // We can run an RPC or raw query, but wait, raw select from information_schema is restricted unless using service role.
+    // Let's try selecting a non-existent column to see if it lists columns in the error, or query an insert with all columns.
+    // Or we can try to query a RPC or just look at the error of a bad select.
+    const { data, error } = await supabase.from('scans').select('non_existent_column');
+    console.log('Error from bad select:', error);
 
     process.exit(0);
   } catch (err) {

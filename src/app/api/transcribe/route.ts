@@ -102,6 +102,30 @@ export async function POST(req: Request) {
       const supabase = await createClient();
       const { data: { user } } = await supabase.auth.getUser();
 
+      let audioUrl = null;
+      try {
+        // Upload audio file to Storage
+        const fileExt = file.name.split('.').pop() || 'mp3';
+        const fileName = `${Date.now()}-${Math.random().toString(36).substring(2)}.${fileExt}`;
+        const filePath = `${user?.id || 'anonymous'}/${fileName}`;
+
+        const { data: uploadData, error: uploadError } = await supabase.storage
+          .from('audio-scans')
+          .upload(filePath, arrayBuffer, { contentType: file.type || 'audio/webm' });
+
+        if (uploadError) {
+          console.error('Supabase audio storage upload error:', uploadError);
+        } else {
+          // Get Public URL
+          const { data: { publicUrl } } = supabase.storage
+            .from('audio-scans')
+            .getPublicUrl(filePath);
+          audioUrl = publicUrl;
+        }
+      } catch (storageErr) {
+        console.error('Audio storage processing error:', storageErr);
+      }
+
       // Save scan record
       await supabase.from('scans').insert({
         type: 'message',
@@ -116,9 +140,10 @@ export async function POST(req: Request) {
         user_id: user?.id || null,
       });
 
-      // Save voice transcript record
+      // Save voice transcript record including the new audio_url
       await supabase.from('voice_transcripts').insert({
         transcript: transcriptText,
+        audio_url: audioUrl,
         user_id: user?.id || null,
       });
     } catch (dbErr) {

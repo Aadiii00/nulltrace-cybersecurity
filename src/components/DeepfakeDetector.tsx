@@ -93,10 +93,10 @@ export default function DeepfakeDetector() {
             AI Vision Analysis
           </div>
           <h2 className="text-3xl font-display font-bold">
-            Deepfake <span className="text-primary">Image Detector</span>
+            AI <span className="text-primary">Image Detector</span>
           </h2>
           <p className="text-foreground/40 max-w-xl mx-auto text-sm">
-            Upload any image to detect whether it was AI-generated or captured by a real camera. Powered by Nulltrace Vision.
+            Upload any image to detect whether it was AI-generated or captured by a real human. Powered by Nulltrace Vision.
           </p>
         </motion.div>
 
@@ -183,7 +183,7 @@ export default function DeepfakeDetector() {
                   ) : (
                     <>
                       <ScanLine className="w-4 h-4" />
-                      Scan for Deepfake
+                      Scan for AI Generation
                     </>
                   )}
                 </button>
@@ -206,8 +206,8 @@ export default function DeepfakeDetector() {
                 <div className="absolute inset-0 rounded-full border-2 border-transparent border-t-primary animate-spin" />
               </div>
               <div>
-                <p className="font-bold text-primary text-sm">Nulltrace Vision is analyzing the image...</p>
-                <p className="text-foreground/40 text-xs mt-0.5">Scanning for GAN artifacts, texture anomalies, lighting inconsistencies</p>
+                <p className="font-bold text-primary text-sm">Hugging Face model is analyzing the image...</p>
+                <p className="text-foreground/40 text-xs mt-0.5">Ateeqq/ai-vs-human-image-detector scanning for artificial patterns and artifacts</p>
               </div>
             </motion.div>
           )}
@@ -231,8 +231,11 @@ export default function DeepfakeDetector() {
         {/* Result Card */}
         <AnimatePresence>
           {result && (() => {
-            // 75% threshold rule: >= 75 = Real, < 75 = Manipulated/AI Generated
-            const isReal = result.confidence >= 75;
+            // CORRECT LOGIC:
+            // confidence = how sure Gemini is about its isAIGenerated verdict
+            // isReal = Gemini says NOT AI-generated AND is >= 75% confident
+            // isManipulated = Gemini says IS AI-generated (any confidence), OR confidence < 75%
+            const isReal = !result.isAIGenerated && result.confidence >= 75;
 
             return (
               <motion.div
@@ -266,10 +269,10 @@ export default function DeepfakeDetector() {
                         "text-2xl font-display font-bold mt-0.5",
                         isReal ? "text-green-400" : "text-red-400"
                       )}>
-                        {isReal ? "✓ Real Image" : "⚠ AI Generated / Manipulated"}
+                        {isReal ? "✓ Human Created Image" : "⚠ AI Generated Image"}
                       </h3>
                       <p className="text-[10px] text-foreground/30 mt-0.5 uppercase tracking-widest">
-                        {isReal ? "Confidence ≥ 75% — Authentic" : "Confidence < 75% — Suspicious"}
+                        {isReal ? "Confidence ≥ 75% — Human Created" : "Confidence < 75% — AI Generated"}
                       </p>
                     </div>
                   </div>
@@ -293,11 +296,11 @@ export default function DeepfakeDetector() {
                   <div className="flex items-center justify-between text-xs text-foreground/40 mb-2">
                     <span className="flex items-center gap-1">
                       <span className="w-2 h-2 rounded-full bg-red-400 inline-block" />
-                      Manipulated (&lt;75%)
+                      AI Generated (&lt;75%)
                     </span>
                     <span className="text-foreground/20">|  75% threshold  |</span>
                     <span className="flex items-center gap-1">
-                      Real (≥75%)
+                      Human Created (≥75%)
                       <span className="w-2 h-2 rounded-full bg-green-400 inline-block" />
                     </span>
                   </div>
@@ -340,12 +343,29 @@ export default function DeepfakeDetector() {
                       : "text-red-400 bg-red-400/10 border-red-400/20"
                   )}>
                     <div className={cn("w-1.5 h-1.5 rounded-full animate-pulse", isReal ? "bg-green-400" : "bg-red-400")} />
-                    {isReal ? "Image verified as authentic" : "Deepfake alert sent to webhook"}
+                    {isReal ? "Image verified as human created" : "AI alert sent to webhook"}
                   </div>
                 </div>
               </motion.div>
             );
           })()}
+        </AnimatePresence>
+
+        {/* AI Disclaimer */}
+        <AnimatePresence>
+          {result && (
+            <motion.div
+              initial={{ opacity: 0, y: 10 }}
+              animate={{ opacity: 1, y: 0 }}
+              exit={{ opacity: 0 }}
+              className="text-center mt-4"
+            >
+              <p className="text-xs text-foreground/40 inline-flex items-center gap-2 bg-foreground/5 py-1.5 px-4 rounded-full border border-foreground/10">
+                <AlertTriangle className="w-3 h-3" />
+                This is an AI-based prediction and may not be 100% accurate.
+              </p>
+            </motion.div>
+          )}
         </AnimatePresence>
       </div>
     </section>

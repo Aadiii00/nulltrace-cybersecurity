@@ -1,9 +1,6 @@
 import { NextResponse } from 'next/server';
-import { GoogleGenerativeAI } from '@google/generative-ai';
+import { groqVision } from '@/lib/groq';
 import { createClient } from '@/lib/supabase/server';
-
-const genAI = new GoogleGenerativeAI(process.env.GEMINI_API_KEY || '');
-const visionModel = genAI.getGenerativeModel({ model: 'gemini-2.5-flash' });
 
 const ALLOWED_TYPES = ['image/jpeg', 'image/jpg', 'image/png', 'image/webp'];
 const MAX_SIZE_BYTES = 5 * 1024 * 1024; // 5MB
@@ -31,65 +28,94 @@ export async function POST(req: Request) {
       );
     }
 
-    // Convert to base64 for Gemini Vision
+    // We will read the arrayBuffer once in case we need it for fallback
     const arrayBuffer = await image.arrayBuffer();
-    const base64Data = Buffer.from(arrayBuffer).toString('base64');
 
-    const prompt = `You are an expert forensic AI analyst specializing in detecting AI-generated and deepfake images.
+    let analysis;
+    try {
+      // Forward the image to our local Python FastAPI backend
+      const pythonFormData = new FormData();
+      // Need to recreate a Blob for fetch to avoid stream consumption issues
+      pythonFormData.append('image', new Blob([arrayBuffer], { type: image.type }), image.name);
 
-Analyze this image carefully and determine whether it is AI-generated/synthetic or a real photograph taken by a camera.
+      const backendRes = await fetch('http://127.0.0.1:8000/detect-image', {
+        method: 'POST',
+        body: pythonFormData,
+      });
 
-Check for these indicators of AI generation:
-- Unnatural skin textures or overly smooth surfaces
-- Inconsistent lighting or impossible shadows
-- Distorted, asymmetrical, or melted facial features
-- Blurry or warped background/foreground boundaries
-- Missing or incorrect reflections in eyes or glasses
-- Hair that looks too perfect or has unusual merging patterns
-- GAN artifacts (repeating patterns, noise artifacts)
-- Lack of natural camera noise or grain
-- Impossible anatomical details (extra fingers, merged ears, etc.)
-- Overly perfect symmetry that looks unnatural
-- Background elements that make no geometric sense
+      if (!backendRes.ok) {
+        throw new Error(`Python Backend Error: ${backendRes.status}`);
+      }
 
-Respond ONLY with valid JSON, no markdown, no explanation outside JSON:
+      const hfData = await backendRes.json();
+
+      analysis = {
+        isAIGenerated: hfData.type === 'AI_GENERATED',
+        confidence: hfData.confidence,
+        reason: hfData.reason || (hfData.type === 'AI_GENERATED'
+          ? 'Deep analysis via Hugging Face (Ateeqq/ai-vs-human-image-detector) flagged this image as AI-generated.'
+          : 'Deep analysis via Hugging Face (Ateeqq/ai-vs-human-image-detector) classified this image as a human-created photograph.')
+      };
+    } catch (err) {
+      console.warn("Primary AI backend failed. Falling back to Groq Vision...", err);
+      
+      const base64Data = Buffer.from(arrayBuffer).toString('base64');
+      const prompt = `You are a top-tier forensic AI analyst. Analyze if this image is AI-generated or a human-created photograph.
+Respond ONLY with valid JSON, nothing else:
 {
   "isAIGenerated": true or false,
-  "confidence": a number from 0 to 100 representing your confidence level,
-  "reason": "A clear, technical 2-3 sentence explanation of the specific visual evidence that led to your conclusion."
+  "confidence": a number from 0 to 100,
+  "reason": "1-2 sentence technical reason."
 }`;
 
-    const result = await visionModel.generateContent([
-      {
-        inlineData: {
-          mimeType: image.type as 'image/jpeg' | 'image/png' | 'image/webp',
-          data: base64Data,
-        },
-      },
-      prompt,
-    ]);
+      const responseText = await groqVision(base64Data, image.type, prompt);
+      console.log('Groq Fallback raw response:', responseText);
 
-    const responseText = result.response.text();
-    console.log('Gemini deepfake raw response:', responseText);
-
-    // Strip markdown code blocks if present
-    const jsonMatch = responseText.match(/\{[\s\S]*\}/);
-    if (!jsonMatch) {
-      throw new Error('Failed to extract valid JSON from Gemini response.');
+      const jsonMatch = responseText.match(/\{[\s\S]*\}/);
+      if (!jsonMatch) {
+         throw new Error('Fallback failed to extract valid JSON.');
+      }
+      
+      const fallbackData = JSON.parse(jsonMatch[0]);
+      analysis = {
+        isAIGenerated: fallbackData.isAIGenerated,
+        confidence: fallbackData.confidence,
+        reason: `[Analyzed via Fallback System] ${fallbackData.reason}`
+      };
     }
 
-    const analysis = JSON.parse(jsonMatch[0]) as {
-      isAIGenerated: boolean;
-      confidence: number;
-      reason: string;
-    };
-
-    // Save to Supabase
+    // Save to Supabase Storage & Database
     const supabase = await createClient();
     const { data: { user } } = await supabase.auth.getUser();
 
+    let imageUrl = null;
+    try {
+      // 1. Upload to Storage
+      const fileExt = image.name.split('.').pop();
+      const fileName = `${Date.now()}-${Math.random().toString(36).substring(2)}.${fileExt}`;
+      const filePath = `${user?.id || 'anonymous'}/${fileName}`;
+
+      const { data: uploadData, error: uploadError } = await supabase.storage
+        .from('deepfake-images')
+        .upload(filePath, arrayBuffer, { contentType: image.type });
+
+      if (uploadError) {
+        console.error('Supabase storage upload error:', uploadError);
+      } else {
+        // 2. Get Public URL
+        const { data: { publicUrl } } = supabase.storage
+          .from('deepfake-images')
+          .getPublicUrl(filePath);
+        imageUrl = publicUrl;
+      }
+    } catch (storageErr) {
+      console.error('Storage processing error:', storageErr);
+    }
+
+    // 3. Insert into Database
     const { error: dbError } = await supabase.from('deepfake_scans').insert({
       image_name: image.name,
+      image_url: imageUrl,
       is_ai_generated: analysis.isAIGenerated,
       confidence: analysis.confidence,
       reason: analysis.reason,

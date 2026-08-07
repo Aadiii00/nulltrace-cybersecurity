@@ -1,10 +1,22 @@
 import { createClient } from '@/lib/supabase/server';
 import { NextResponse } from 'next/server';
 
+// Handle CORS preflight
+export async function OPTIONS() {
+  return new NextResponse(null, {
+    status: 204,
+    headers: {
+      "Access-Control-Allow-Origin": "*",
+      "Access-Control-Allow-Methods": "GET, POST, OPTIONS",
+      "Access-Control-Allow-Headers": "Content-Type",
+    },
+  });
+}
+
 export async function GET() {
   try {
     const supabase = await createClient();
-    
+
     const { data: scans, error } = await supabase
       .from('scans')
       .select('*')
@@ -12,15 +24,23 @@ export async function GET() {
 
     if (error) {
       console.error('Supabase error:', error);
-      return NextResponse.json({ error: error.message }, { status: 500 });
+      return NextResponse.json({ error: error.message }, { 
+        status: 500,
+        headers: { "Access-Control-Allow-Origin": "*" }
+      });
     }
 
-    return NextResponse.json(scans || []);
+    return NextResponse.json(scans || [], {
+      headers: { "Access-Control-Allow-Origin": "*" }
+    });
   } catch (error) {
     console.error('API error:', error);
     return NextResponse.json(
       { error: 'Internal Server Error' },
-      { status: 500 }
+      { 
+        status: 500,
+        headers: { "Access-Control-Allow-Origin": "*" }
+      }
     );
   }
 }
@@ -43,15 +63,23 @@ export async function POST(request: Request) {
 
     if (error) {
       console.error('Supabase insert error:', error);
-      return NextResponse.json({ error: error.message }, { status: 500 });
+      return NextResponse.json({ error: error.message }, { 
+        status: 500,
+        headers: { "Access-Control-Allow-Origin": "*" }
+      });
     }
 
-    return NextResponse.json(data);
+    return NextResponse.json(data, {
+      headers: { "Access-Control-Allow-Origin": "*" }
+    });
   } catch (error) {
     console.error('API POST error:', error);
     return NextResponse.json(
       { error: 'Internal Server Error' },
-      { status: 500 }
+      { 
+        status: 500,
+        headers: { "Access-Control-Allow-Origin": "*" }
+      }
     );
   }
 }

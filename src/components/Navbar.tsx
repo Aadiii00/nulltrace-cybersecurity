@@ -2,7 +2,7 @@
 
 import { useEffect, useState } from "react";
 import { motion } from "framer-motion";
-import { Shield, Zap, LayoutDashboard, Search, Menu, X, Mic } from "lucide-react";
+import { Shield, Zap, LayoutDashboard, Search, Menu, X, Mic, Globe, ChevronDown } from "lucide-react";
 import Link from "next/link";
 import { supabase } from "@/lib/supabase";
 import { User } from "@supabase/supabase-js";
@@ -50,16 +50,28 @@ export default function Navbar() {
             </span>
           </Link>
 
-          <div className="hidden md:flex items-center space-x-6 text-sm font-medium text-foreground/60">
+          <div className="hidden lg:flex items-center lg:space-x-3 xl:space-x-5 text-[11px] xl:text-xs font-bold text-foreground/60">
             <Link href="/tools" className="hover:text-primary transition-colors neon-text hover:neon-border px-2 py-1 rounded">Tools</Link>
             <Link href="/dashboard" className="hover:text-primary transition-colors flex items-center space-x-1 hover:neon-border px-2 py-1 rounded">
-              <LayoutDashboard className="w-4 h-4" />
+              <LayoutDashboard className="w-3.5 h-3.5" />
               <span>Dashboard</span>
             </Link>
             <Link href="/community" className="hover:text-primary transition-colors neon-text hover:neon-border px-2 py-1 rounded">Community Feed</Link>
             <Link href="/transcribe" className="hover:text-primary transition-colors flex items-center space-x-1 hover:neon-border px-2 py-1 rounded">
-              <Mic className="w-4 h-4" />
+              <Mic className="w-3.5 h-3.5" />
               <span>Voice Sentinel</span>
+            </Link>
+            <Link href="/voice-detector" className="hover:text-primary transition-colors flex items-center space-x-1 hover:neon-border px-2 py-1 rounded">
+              <Mic className="w-3.5 h-3.5 text-cyan-400" />
+              <span>AI Voice Detector</span>
+            </Link>
+            <Link href="/network-scan" className="hover:text-primary transition-colors flex items-center space-x-1 hover:neon-border px-2 py-1 rounded">
+              <Globe className="w-3.5 h-3.5 text-cyan-400" />
+              <span>Net Intel</span>
+            </Link>
+            <Link href="/subdomain-discovery" className="hover:text-primary transition-colors flex items-center space-x-1 hover:neon-border px-2 py-1 rounded">
+              <Globe className="w-3.5 h-3.5 text-primary" />
+              <span>Subdomains</span>
             </Link>
           </div>
         </div>
@@ -123,6 +135,8 @@ export default function Navbar() {
           <Link href="/dashboard" className="block text-lg font-medium">Analytics Dashboard</Link>
           <Link href="/community" className="block text-lg font-medium">Threat Feed</Link>
           <Link href="/transcribe" className="block text-lg font-medium">🎙️ Voice Sentinel</Link>
+          <Link href="/voice-detector" className="block text-lg font-medium">🎤 AI Voice Detector</Link>
+          <Link href="/subdomain-discovery" className="block text-lg font-medium">🌐 Subdomains</Link>
           <hr className="border-white/5" />
           <div className="grid grid-cols-2 gap-4">
             <button 

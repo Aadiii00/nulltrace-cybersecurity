@@ -5,7 +5,8 @@ import { ThreatAnalysis } from '@/types/threats';
 
 export async function POST(req: Request) {
   try {
-    const { content, type, toolContext: customContext } = await req.json();
+    const customKey = req.headers.get('x-groq-api-key') || undefined;
+    const { content, type, toolContext: customContext, skipSave } = await req.json();
 
     if (!content) {
       return NextResponse.json({ error: 'Content is required' }, { status: 400 });
@@ -49,7 +50,7 @@ export async function POST(req: Request) {
     `;
 
     console.log('Groq prompt:', prompt);
-    const responseText = await groqGenerate(prompt);
+    const responseText = await groqGenerate(prompt, customKey);
     console.log('Groq raw response:', responseText);
     
     // Extract JSON if model wraps it in markdown
@@ -61,71 +62,73 @@ export async function POST(req: Request) {
     
     const analysis: ThreatAnalysis = JSON.parse(jsonMatch[0]);
 
-    const supabase = await createClient();
-    const { data: { user } } = await supabase.auth.getUser();
+    if (!skipSave) {
+      const supabase = await createClient();
+      const { data: { user } } = await supabase.auth.getUser();
 
-    // Map user-friendly extension types to valid database types
-    let dbType: string;
-    const lowerType = type ? type.toLowerCase() : 'message';
-    
-    if (lowerType === 'url' || lowerType.includes('phishing') || lowerType.includes('link')) {
-      dbType = 'url';
-    } else if (lowerType === 'file' || lowerType.includes('screenshot')) {
-      dbType = 'file';
-    } else {
-      // Default for WhatsApp Message, Email Content, Selected Text, etc.
-      dbType = 'message';
-    }
-    
-    const { error: dbError } = await supabase.from('scans').insert({
-      type: dbType,
-      input: content.substring(0, 5000), // Safety truncation for DB
-      trust_score: analysis.trustScore,
-      risk_level: analysis.riskLevel,
-      analysis: analysis.analysis,
-      intent: analysis.intent,
-      emotion: analysis.emotion,
-      patterns: analysis.patterns,
-      risky_parts: analysis.riskyParts,
-      user_id: user?.id || null
-    });
-
-    if (dbError) {
-      console.error('Supabase save error:', dbError);
-    }
-
-    // Send webhook to Make.com
-    try {
-      const webhookData = {
-        timestamp: new Date().toISOString(),
+      // Map user-friendly extension types to valid database types
+      let dbType: string;
+      const lowerType = type ? type.toLowerCase() : 'message';
+      
+      if (lowerType === 'url' || lowerType.includes('phishing') || lowerType.includes('link')) {
+        dbType = 'url';
+      } else if (lowerType === 'file' || lowerType.includes('screenshot')) {
+        dbType = 'file';
+      } else {
+        // Default for WhatsApp Message, Email Content, Selected Text, etc.
+        dbType = 'message';
+      }
+      
+      const { error: dbError } = await supabase.from('scans').insert({
         type: dbType,
-        input: content.substring(0, 5000),
-        trustScore: analysis.trustScore,
-        riskLevel: analysis.riskLevel,
+        input: content.substring(0, 5000), // Safety truncation for DB
+        trust_score: analysis.trustScore,
+        risk_level: analysis.riskLevel,
         analysis: analysis.analysis,
         intent: analysis.intent,
         emotion: analysis.emotion,
         patterns: analysis.patterns,
-        riskyParts: analysis.riskyParts,
-        userId: user?.id || null,
-        source: 'nulltrace-web'
-      };
-
-      const webhookResponse = await fetch('https://hook.us2.make.com/gbe48aw2e2v7wpenaxy5h7042atrn5dq', {
-        method: 'POST',
-        headers: {
-          'Content-Type': 'application/json',
-        },
-        body: JSON.stringify(webhookData)
+        risky_parts: analysis.riskyParts,
+        user_id: user?.id || null
       });
 
-      if (!webhookResponse.ok) {
-        console.error('Webhook failed:', webhookResponse.status, webhookResponse.statusText);
-      } else {
-        console.log('Webhook sent successfully');
+      if (dbError) {
+        console.error('Supabase save error:', dbError);
       }
-    } catch (webhookError) {
-      console.error('Webhook error:', webhookError);
+
+      // Send webhook to Make.com
+      try {
+        const webhookData = {
+          timestamp: new Date().toISOString(),
+          type: dbType,
+          input: content.substring(0, 5000),
+          trustScore: analysis.trustScore,
+          riskLevel: analysis.riskLevel,
+          analysis: analysis.analysis,
+          intent: analysis.intent,
+          emotion: analysis.emotion,
+          patterns: analysis.patterns,
+          riskyParts: analysis.riskyParts,
+          userId: user?.id || null,
+          source: 'nulltrace-web'
+        };
+
+        const webhookResponse = await fetch('https://hook.us2.make.com/gbe48aw2e2v7wpenaxy5h7042atrn5dq', {
+          method: 'POST',
+          headers: {
+            'Content-Type': 'application/json',
+          },
+          body: JSON.stringify(webhookData)
+        });
+
+        if (!webhookResponse.ok) {
+          console.error('Webhook failed:', webhookResponse.status, webhookResponse.statusText);
+        } else {
+          console.log('Webhook sent successfully');
+        }
+      } catch (webhookError) {
+        console.error('Webhook error:', webhookError);
+      }
     }
 
     return NextResponse.json(analysis);

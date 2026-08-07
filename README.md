@@ -1,159 +1,113 @@
 # 🛡️ Nulltrace — Cyber Sentinel Intelligence
 
-**Nulltrace** is an advanced, AI-powered threat detection ecosystem designed to identify, analyze, and neutralize digital threats across the web. From deceptive messages and phishing URLs to recruitment fraud and social engineering, Nulltrace provides real-time protection via a sleek dashboard and a powerful Chrome Extension.
+**Nulltrace** is a state-of-the-art, AI-powered threat intelligence ecosystem designed to detect, analyze, and neutralize modern digital threats. From sophisticated phishing attempts and fake job offers to deepfake image detection and voice-based social engineering, Nulltrace provides a multi-modal defense layer for the digital age.
+
+[![Next.js](https://img.shields.io/badge/Next.js-15+-black?style=for-the-badge&logo=next.js)](https://nextjs.org/)
+[![Tailwind CSS](https://img.shields.io/badge/Tailwind_4-38B2AC?style=for-the-badge&logo=tailwind-css)](https://tailwindcss.com/)
+[![Groq](https://img.shields.io/badge/Groq-AI-orange?style=for-the-badge)](https://groq.com/)
+[![Supabase](https://img.shields.io/badge/Supabase-Database-3ECF8E?style=for-the-badge&logo=supabase)](https://supabase.com/)
 
 ![Nulltrace Banner](https://images.unsplash.com/photo-1550751827-4bd374c3f58b?auto=format&fit=crop&q=80&w=2070)
 
 ---
 
-## 🚀 Key Features
+## ✨ Key Features
 
-### 🌐 Intelligence Dashboard
-- **Spam Detector:** Instantly flag marketing spam and unsolicited bulk messages.
-- **Phishing URL Scanner:** Deep-link analysis for typosquatting, redirect chains, and malicious domains.
-- **Fake Job Identifier:** Verify internship and job offers against known recruitment fraud patterns.
-- **Email Analyzer:** Scan headers and content for sophisticated social engineering.
-- **Screenshot Scanner:** OCR-powered threat detection for WhatsApp, Instagram, and Gmail screenshots.
-- **OTP Scam Shield:** Identify tactics used to coerce users into sharing secret codes.
-- **🎙️ Voice Sentinel:** Neural speech-to-text transcription with automated forensic threat analysis on voice messages and audio recordings.
-- **⚡ Automation Workflows:** Event-driven n8n pipelines that trigger threat reports, alerts, and notifications automatically.
-- **🧾 Auto Complaint Generator:** Instantly generate a ready-to-file cybercrime complaint and a formal email draft straight from any scan result.
+### 🕵️ Intelligence Dashboard
+A high-performance hub for real-time threat analysis:
+- **Spam & Phishing Scanner:** Advanced heuristic and AI analysis for URLs and messages.
+- **Fake Job Verifier:** Validates recruitment offers against known fraud vectors.
+- **OTP Scam Shield:** Detects psychological pressure tactics used in credential theft.
+- **Screenshot OCR:** Scan WhatsApp, Instagram, or Email screenshots for hidden threats using Tesseract.js.
 
-### 🎙️ Voice Sentinel (New)
-Nulltrace can now analyze **voice messages and audio recordings** for social engineering, phishing, and fraud — not just text.
+### 🎙️ Voice Sentinel (Forensic Audio Analysis)
+The world's first integrated voice threat detection system:
+- **Neural Transcription:** Powered by **Deepgram Nova-2** for near-perfect accuracy.
+- **Sentiment & Intent Analysis:** Uses **Groq Llama-3** to identify fear, urgency, and impersonation in voice messages.
+- **Verbatim Indicators:** Highlights exactly which part of the audio sounds suspicious.
 
-- **Live Capture:** Record audio directly in the browser using your microphone and get instant threat analysis.
-- **Forensic Upload:** Upload existing audio files (MP3, WAV, M4A, WebM, OGG, FLAC — up to 25MB) for deep inspection.
-- **Neural Transcription:** Powered by **Deepgram Nova-2** with smart formatting and punctuation for high-accuracy STT (speech-to-text).
-- **Automated Threat Analysis:** Transcripts are immediately piped into the **Cyber Sentinel** (Gemini 2.5 Flash) engine, which scans for:
-  - Urgency and fear tactics
-  - OTP / financial fraud scripts
-  - Impersonation and deepfake audio patterns
-  - Psychological manipulation techniques
-- **Full Forensic Report:** Returns a Trust Score (0–100), Risk Level, intent classification, emotional vector analysis, identified threat patterns, and verbatim risky snippets.
-- **Scan History:** Voice scans are stored in Supabase alongside other scan types for a unified audit trail.
-
-### 🧩 Chrome Extension (V3)
-- **Context-Menu Scanning:** Right-click any selected text on any website to scan with **Cyber Sentinel**.
-- **Real-Time Analysis:** Get instant risk assessments and "Cyber Sentinel" reasoning in a sleek overlay.
-- **Broad Coverage:** Works across WhatsApp Web, Gmail, and any other social platform.
-
-### ⚡ Automation & Workflows
-Nulltrace integrates with **n8n** and other automation platforms to create end-to-end, event-driven intelligence pipelines — no manual intervention required.
-
-| Workflow | Trigger | Action |
-|---|---|---|
-| **Threat Alert Dispatcher** | High / Critical risk scan result | Sends instant WhatsApp notification via n8n webhook |
-| **Daily Digest** | Scheduled (cron) | Aggregates all scans from the last 24h and emails a summary report |
-| **Voice Scan Pipeline** | New audio upload | Transcribes → analyzes → logs scan → fires alert if risk ≥ High |
-| **Community Flag Relay** | User submits a community threat | Posts to internal Slack / Discord channel for human review |
-| **Supabase → n8n Bridge** | Supabase DB insert event | Triggers downstream workflows (notifications, logging, archiving) |
-
-**Tools used in the automation stack:**
-- **[n8n](https://n8n.io/)** — self-hostable workflow automation (webhooks, cron, HTTP nodes)
-- **WhatsApp Business API** — real-time threat notifications
-- **Gmail / SMTP** — digest and alert emails
-- **Slack / Discord Webhooks** — team alert channels
-- **Supabase Webhooks** — database-event-driven triggers
-- **Deepgram** — STT node in the voice pipeline
-- **Google Gemini** — AI analysis node in every pipeline
-
-> Workflows are configured in **n8n** by importing the JSON workflow files. Each workflow communicates with Nulltrace via the `/api/analyze` or `/api/transcribe` endpoints.
-
----
+### 🖼️ AI Image Detector (Vision Forensic)
+Aggressive classification of images to identify AI-generated content:
+- **AI vs Human Classifier:** Powered by **Hugging Face (Ateeqq/ai-vs-human-image-detector)** running locally via `transformers` library.
+- **Visual Fallback:** Falls back to **Groq Vision** if local inference is unavailable.
+- **Confidence Scoring:** Returns a precise probability of AI generation vs human creation.
 
 ### 🧾 Auto Complaint Generator
-Nulltrace doesn't just **detect** threats — it helps you **act on them**. After any High or Critical risk scan, the platform automatically drafts legally-structured complaint documents so you can report the scam in minutes.
+Don't just detect — take action. Nulltrace automatically drafts:
+- **Official Cybercrime Reports:** Pre-formatted for platforms like [cybercrime.gov.in](https://cybercrime.gov.in).
+- **Abuse Emails:** Professional drafts for ISPs, banks, and platform moderators.
 
-**What gets generated:**
+### 🧩 Chrome Extension (V3)
+Zero-friction security:
+- **Contextual Scanning:** Right-click any text on the web to send it to the Cyber Sentinel engine.
+- **Overlay Results:** View risk assessments without leaving your current tab.
 
-| Output | Description |
+---
+
+## 🛠️ Modern Tech Stack
+
+| Layer | Technology |
 |---|---|
-| **Cybercrime Portal Complaint** | Structured report formatted for [cybercrime.gov.in](https://cybercrime.gov.in) — India's national cybercrime reporting portal. Includes incident summary, evidence excerpts, risk classification, and recommended IPC/IT Act sections. |
-| **Email Draft** | Professional complaint email pre-addressed for forwarding to ISPs, banks, HR departments, or platform abuse teams — fully personalisable. |
-
-**Powered by Gemini:** The complaint text is AI-generated from the scan's `analysis`, `patterns`, `riskyParts`, and `riskLevel` fields, so every report is specific to the actual threat — not a generic template.
-
-**Why this matters:** Detection alone is passive. The complaint generator closes the loop and moves users from *awareness* → *action*, enabling real-world consequences for scammers.
-
----
-
-## 🧠 The "Cyber Sentinel" Engine
-Nulltrace is powered by the **Google Gemini 2.5 Flash** model, specifically tuned as our **Cyber Sentinel** intelligence engine. It analyzes:
-- **Intent & Emotion:** Understanding the psychological pressure behind a message.
-- **Patterns:** Matching against thousands of known fraud signatures.
-- **Behavioral Analysis:** Predicting the risk level (Low, Medium, High, Critical).
-- **Voice Threats:** Forensic analysis of transcribed audio for vocal social engineering.
+| **Framework** | [Next.js 15+](https://nextjs.org/) (App Router, Server Actions) |
+| **Styling** | [Tailwind CSS 4](https://tailwindcss.com/) + [Framer Motion](https://www.framer.com/motion/) |
+| **Database & Auth** | [Supabase](https://supabase.com/) (PostgreSQL, SSR Auth) |
+| **Local Inference (Vision)** | [Hugging Face](https://huggingface.co/) (Ateeqq/ai-vs-human-image-detector via local `transformers` pipeline) |
+| **Fallback Inference (Vision)** | [Groq](https://groq.com/) (Llama-3-Vision / Scout) |
+| **Inference (Logic)** | [Google Gemini 2.0 Flash](https://ai.google.dev/) (Cyber Sentinel Engine) |
+| **Speech-to-Text** | [Deepgram Nova-2](https://deepgram.com/) |
+| **OCR** | [Tesseract.js](https://tesseract.projectnaptha.com/) |
+| **Automation** | [n8n](https://n8n.io/) / Make.com Webhooks |
 
 ---
 
-## 🛠️ Tech Stack
-- **Frontend:** Next.js 15 (App Router), Tailwind CSS, Framer Motion.
-- **Backend:** Supabase (PostgreSQL, Edge Functions).
-- **AI Service:** Google Generative AI (Gemini 2.5 Flash).
-- **Speech-to-Text:** Deepgram Nova-2 (smart formatting + punctuation).
-- **Extension:** Chrome Manifest V3, Vanilla JS/CSS.
-- **Icons:** Lucide React.
+## 🚀 Getting Started
 
----
+### 1. Requirements
+- **Node.js** v20 or higher
+- **Supabase** Project (for database and authentication)
+- **API Keys:** Groq, Google AI (Gemini), Deepgram
 
-## 🏁 Getting Started
-
-### 1. Prerequisites
-- Node.js (v18+)
-- A Supabase Project
-- A Google AI (Gemini) API Key
-- A Deepgram API Key (for Voice Sentinel)
-
-### 2. Configure Environment
-Create a `.env.local` file in the root directory:
+### 2. Environment Setup
+Create a `.env.local` file:
 ```env
-NEXT_PUBLIC_SUPABASE_URL=your_supabase_url
-NEXT_PUBLIC_SUPABASE_ANON_KEY=your_supabase_anon_key
-GEMINI_API_KEY=your_gemini_api_key
-DEEPGRAM_API_KEY=your_deepgram_api_key
+# Supabase
+NEXT_PUBLIC_SUPABASE_URL=your_url
+NEXT_PUBLIC_SUPABASE_ANON_KEY=your_key
+
+# AI Services
+GEMINI_API_KEY=your_gemini_key
+GROQ_API_KEY=your_groq_key
+DEEPGRAM_API_KEY=your_deepgram_key
 ```
 
-### 3. Install & Run Dashboard
+### 3. Installation
 ```bash
+# Install dependencies
 npm install
+
+# Run development server
 npm run dev
 ```
-Visit `http://localhost:3000` to access the dashboard.
-
-### 4. Install Chrome Extension (Dev Mode)
-1. Open Chrome and go to `chrome://extensions/`.
-2. Enable **"Developer mode"** (top-right).
-3. Click **"Load unpacked"**.
-4. Select the `extension` folder in this repository.
 
 ---
 
-## 📂 Project Structure
+## 📂 Project Navigation
 ```text
-├── extension/          # Chrome Extension (Manifest V3)
 ├── src/
 │   ├── app/
-│   │   ├── api/
-│   │   │   ├── analyze/       # Text/URL threat analysis
-│   │   │   ├── ocr/           # Screenshot OCR endpoint
-│   │   │   └── transcribe/    # Voice Sentinel: Deepgram STT + Gemini analysis
-│   │   ├── transcribe/        # Voice Sentinel page (Live Capture & Upload UI)
-│   │   └── dashboard/         # Main Intelligence Hub
-│   ├── components/
-│   │   ├── audio/             # AudioRecorder, AudioUploader, TranscriptViewer
-│   │   └── ...                # Other UI Components
-│   ├── lib/           # Logic (Gemini, Supabase, Constants)
-│   └── types/         # TypeScript Definitions
-├── public/            # Static Assets
-└── README.md
+│   │   ├── api/          # AI logic (analyze, deepfake, transcribe)
+│   │   ├── dashboard/    # Main user interface
+│   │   └── transcribe/   # Voice Sentinel UI
+│   ├── components/       # Premium UI components
+│   ├── lib/              # Core logic & external services
+│   └── types/            # TypeScript schemas
+├── extension/            # Chrome Extension source
+└── public/               # Global assets
 ```
 
 ---
 
-## 🛡️ License
-Distributed under the MIT License. See `LICENSE` for more information.
-
----
-
-<p align="center">Built with ❤️ by the Nulltrace Team to make the internet a safer place.</p>
+<p align="center">
+  <b>Built for a safer internet by the Nulltrace Team.</b><br>
+  Powered by Next.js, Groq, and Gemini.
+</p>

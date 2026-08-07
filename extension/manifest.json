@@ -1,55 +1,71 @@
 {
   "manifest_version": 3,
-  "name": "NullTrace",
-  "version": "1.0.0",
-  "description": "Real-time AI threat detection ",
-  "permissions": [
-    "activeTab",
-    "storage",
-    "scripting",
-    "contextMenus"
-  ],
-  "host_permissions": [
-    "https://web.whatsapp.com/*",
-    "https://mail.google.com/*",
-    "https://generativelanguage.googleapis.com/*",
-    "http://localhost:3000/*",
-    "http://127.0.0.1:3000/*",
-    "https://*/*",
-    "http://*/*"
-  ],
+  "name": "Nulltrace Sentinel",
+  "short_name": "Nulltrace",
+  "version": "1.1.0",
+  "description": "Real-time cybersecurity threat detection — phishing, scam, and social engineering scanner for your browser.",
+
+  "icons": {
+    "16": "assets/icon-16.png",
+    "48": "assets/icon-48.png",
+    "128": "assets/icon-128.png"
+  },
+
   "action": {
-    "default_popup": "popup.html",
+    "default_popup": "popup/popup.html",
+    "default_title": "Nulltrace Sentinel",
     "default_icon": {
-      "16": "icons/icon16.png",
-      "48": "icons/icon48.png",
-      "128": "icons/icon128.png"
+      "16": "assets/icon-16.png",
+      "48": "assets/icon-48.png",
+      "128": "assets/icon-128.png"
     }
   },
+
   "background": {
-    "service_worker": "background.js"
+    "service_worker": "background/service-worker.js"
   },
+
   "content_scripts": [
     {
-      "matches": [
-        "<all_urls>"
+      "matches": ["<all_urls>"],
+      "js": [
+        "lib/storage.js",
+        "lib/url-intel.js",
+        "lib/threat-normalizer.js",
+        "lib/evidence.js",
+        "lib/api.js",
+        "lib/platform-detector.js",
+        "content/floating-ui.js",
+        "content/selection-handler.js",
+        "content/content.js"
       ],
-      "js": ["content.js"],
-      "css": ["content.css"]
+      "run_at": "document_idle",
+      "all_frames": false
     }
   ],
-  "icons": {
-    "16": "icons/icon16.png",
-    "48": "icons/icon48.png",
-    "128": "icons/icon128.png"
-  },
+
+  "permissions": [
+    "activeTab",
+    "scripting",
+    "tabs",
+    "contextMenus",
+    "storage"
+  ],
+
+  "host_permissions": [
+    "https://api.groq.com/*",
+    "http://localhost:3000/*",
+    "http://localhost:3001/*",
+    "http://localhost:3003/*",
+    "<all_urls>"
+  ],
+
+  "options_page": "options/options.html",
+
   "web_accessible_resources": [
     {
-      "resources": ["icons/*", "content.css"],
+      "resources": ["assets/*"],
       "matches": ["<all_urls>"]
     }
-  ],
-  "content_security_policy": {
-    "extension_pages": "script-src 'self'; object-src 'self';"
-  }
+  ]
 }
