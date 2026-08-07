@@ -21,10 +21,12 @@ app.add_middleware(
 from network_scanner import router as network_scanner_router
 from subdomain_discovery import router as subdomain_discovery_router
 from soc_workbench import router as soc_workbench_router
+from malware_analysis import router as malware_analysis_router
 app.include_router(network_scanner_router)
 app.include_router(subdomain_discovery_router)
 app.include_router(soc_workbench_router)
-print("[Nulltrace] OK Network scanner, Subdomain discovery, and SOC Workbench routers loaded.")
+app.include_router(malware_analysis_router)
+print("[Nulltrace] OK Network scanner, Subdomain discovery, SOC Workbench, and AI Malware Analysis routers loaded.")
 
 # ── Image Deepfake Detector (requires transformers + pillow) ──────────────────
 detector = None
