@@ -3,3 +3,11 @@ uvicorn
 python-dotenv
 python-multipart
 httpx
+huggingface-hub
+pillow
+transformers
+torch
+torchvision
+torchaudio
+librosa
+soundfile
