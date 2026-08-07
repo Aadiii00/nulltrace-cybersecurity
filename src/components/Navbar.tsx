@@ -2,7 +2,7 @@
 
 import { useEffect, useState } from "react";
 import { motion } from "framer-motion";
-import { Shield, Zap, LayoutDashboard, Search, Menu, X, Mic, Globe, ChevronDown } from "lucide-react";
+import { Shield, Zap, LayoutDashboard, Search, Menu, X, Mic, Globe, ChevronDown, ShieldAlert } from "lucide-react";
 import Link from "next/link";
 import { supabase } from "@/lib/supabase";
 import { User } from "@supabase/supabase-js";
@@ -56,14 +56,9 @@ export default function Navbar() {
               <LayoutDashboard className="w-3.5 h-3.5" />
               <span>Dashboard</span>
             </Link>
-            <Link href="/community" className="hover:text-primary transition-colors neon-text hover:neon-border px-2 py-1 rounded">Community Feed</Link>
-            <Link href="/transcribe" className="hover:text-primary transition-colors flex items-center space-x-1 hover:neon-border px-2 py-1 rounded">
-              <Mic className="w-3.5 h-3.5" />
-              <span>Voice Sentinel</span>
-            </Link>
-            <Link href="/voice-detector" className="hover:text-primary transition-colors flex items-center space-x-1 hover:neon-border px-2 py-1 rounded">
-              <Mic className="w-3.5 h-3.5 text-cyan-400" />
-              <span>AI Voice Detector</span>
+            <Link href="/soc-workbench" className="hover:text-cyan-400 transition-colors flex items-center space-x-1 hover:neon-border px-2 py-1 rounded bg-cyan-950/20 text-cyan-400 border border-cyan-500/20">
+              <ShieldAlert className="w-3.5 h-3.5 text-cyan-400 animate-pulse" />
+              <span>SOC Workbench</span>
             </Link>
             <Link href="/network-scan" className="hover:text-primary transition-colors flex items-center space-x-1 hover:neon-border px-2 py-1 rounded">
               <Globe className="w-3.5 h-3.5 text-cyan-400" />
@@ -72,6 +67,10 @@ export default function Navbar() {
             <Link href="/subdomain-discovery" className="hover:text-primary transition-colors flex items-center space-x-1 hover:neon-border px-2 py-1 rounded">
               <Globe className="w-3.5 h-3.5 text-primary" />
               <span>Subdomains</span>
+            </Link>
+            <Link href="/voice-detector" className="hover:text-primary transition-colors flex items-center space-x-1 hover:neon-border px-2 py-1 rounded">
+              <Mic className="w-3.5 h-3.5 text-cyan-400" />
+              <span>AI Voice</span>
             </Link>
           </div>
         </div>
