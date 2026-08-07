@@ -3,9 +3,7 @@ import {
   Globe2, 
   Briefcase, 
   Mail, 
-  Camera, 
-  KeyRound, 
-  Users 
+  Camera 
 } from "lucide-react";
 import React from 'react';
 
@@ -14,9 +12,7 @@ export type ToolId =
   | "phishing" 
   | "job-scam" 
   | "email" 
-  | "screenshot" 
-  | "otp" 
-  | "social-media";
+  | "screenshot";
 
 export interface ToolDefinition {
   id: ToolId;
@@ -73,23 +69,5 @@ export const TOOLS: ToolDefinition[] = [
     gradient: "from-primary/20 to-transparent",
     tab: "file",
     systemPrompt: "Focus on visual scam patterns found in screenshots of mobile apps. Detect social engineering, fake customer support chats, and crypto-investment scams shown in images.",
-  },
-  {
-    id: "otp",
-    title: "OTP Scam Detector",
-    description: "Detect social engineering tactics used to steal secret codes.",
-    icon: KeyRound,
-    gradient: "from-secondary/20 to-transparent",
-    tab: "message",
-    systemPrompt: "Focus on social engineering tactics specifically designed to coerce users into sharing One-Time Passwords (OTPs). Look for impersonation of banks or service providers.",
-  },
-  {
-    id: "social-media",
-    title: "Social Media Check",
-    description: "Analyze profile links and DMs for potential security risks.",
-    icon: Users,
-    gradient: "from-primary/20 to-transparent",
-    tab: "url",
-    systemPrompt: "Focus on threats prevalent on social platforms, including fake profile links, DM-based phishing, and 'free' account upgrades that require credential entry.",
   },
 ];

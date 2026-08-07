@@ -5,7 +5,7 @@ import Navbar from "@/components/Navbar";
 import Footer from "@/components/Footer";
 import { TOOLS, type ToolId } from "@/lib/constants";
 import Link from "next/link";
-import { ShieldAlert, Globe2, Briefcase, Mail, Camera, KeyRound, Users, ArrowRight, Search } from "lucide-react";
+import { ShieldAlert, Globe2, Briefcase, Mail, Camera, ArrowRight, Search } from "lucide-react";
 import DeepfakeDetector from "@/components/DeepfakeDetector";
 
 export default function ToolsPage() {

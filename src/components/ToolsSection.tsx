@@ -6,8 +6,6 @@ import {
   Briefcase, 
   Mail, 
   Camera, 
-  KeyRound, 
-  Users,
   ArrowRight
 } from "lucide-react";
 import { motion } from "framer-motion";
