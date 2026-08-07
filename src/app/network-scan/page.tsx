@@ -26,7 +26,7 @@ interface PortResult {
 interface GeoIP {
   country?: string; countryCode?: string; regionName?: string; city?: string;
   lat?: number; lon?: number; isp?: string; org?: string; as?: string;
-  proxy?: boolean; hosting?: boolean; mobile?: boolean; hostname?: string; error?: string;
+  proxy?: boolean; hosting?: boolean; mobile?: boolean; hostname?: string; timezone?: string; error?: string;
 }
 
 interface VirusTotalVendor {

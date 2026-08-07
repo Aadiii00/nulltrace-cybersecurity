@@ -2,12 +2,23 @@ import re
 import os
 import json
 import time
+import socket
+import asyncio
 from datetime import datetime, timezone
 from typing import List, Optional, Dict, Any
 from fastapi import APIRouter, HTTPException, UploadFile, File, Form
 from pydantic import BaseModel
 import httpx
 from dotenv import load_dotenv
+
+from network_scanner import (
+    get_virustotal_intelligence,
+    get_geoip_and_ipinfo,
+    resolve_domain,
+    get_enhanced_ssl,
+    get_enhanced_dns_records,
+    get_whois_intelligence
+)
 
 load_dotenv(dotenv_path=os.path.join(os.path.dirname(__file__), "../.env.local"))
 
@@ -60,29 +71,81 @@ async def investigate_ioc(req: IOCInvestigateRequest):
     if not raw_query:
         raise HTTPException(status_code=400, detail="Query cannot be empty")
 
+    clean_target = re.sub(r'^https?://', '', raw_query).split('/')[0].split(':')[0]
     ioc_type = detect_ioc_type(raw_query)
-    
-    # Calculate baseline risk score based on IOC patterns & intelligence heuristics
-    risk_score = 45
-    severity = "Medium"
-    confidence = 88
-    
-    # MITRE ATT&CK Mapping Heuristics
+    is_ip = ioc_type in ["IPv4", "IPv6"]
+
+    # 1. Resolve IP
+    resolved_ip = None
+    if is_ip:
+        resolved_ip = clean_target
+    else:
+        resolved_ip = resolve_domain(clean_target)
+
+    # 2. Parallel Live Telemetry Scan
+    vt_task = get_virustotal_intelligence(clean_target, is_ip)
+    geoip_task = get_geoip_and_ipinfo(resolved_ip) if resolved_ip else asyncio.sleep(0)
+
+    if not is_ip and clean_target:
+        whois_task = get_whois_intelligence(clean_target)
+        dns_task = get_enhanced_dns_records(clean_target, resolved_ip)
+        ssl_task = get_enhanced_ssl(clean_target)
+    else:
+        whois_task = asyncio.sleep(0)
+        dns_task = asyncio.sleep(0)
+        ssl_task = asyncio.sleep(0)
+
+    results = await asyncio.gather(vt_task, geoip_task, whois_task, dns_task, ssl_task)
+    vt_data = results[0] if isinstance(results[0], dict) else {}
+    geoip_data = results[1] if isinstance(results[1], dict) else {}
+    whois_data = results[2] if isinstance(results[2], dict) else {}
+    dns_data = results[3] if isinstance(results[3], dict) else {}
+    ssl_data = results[4] if isinstance(results[4], dict) else {}
+
+    # Real Risk Score Calculation
+    vt_malicious = vt_data.get("malicious", 0)
+    vt_total = vt_data.get("totalEngines", 70)
+
+    risk_score = 10
+    factors = []
+
+    if vt_malicious > 0:
+        risk_score += min(75, vt_malicious * 25)
+        factors.append(f"VirusTotal: Flagged malicious by {vt_malicious}/{vt_total} security vendors")
+
+    if ssl_data.get("isExpired"):
+        risk_score += 20
+        factors.append("SSL Certificate: Certificate is expired or invalid")
+
+    if whois_data.get("isNewlyRegistered"):
+        risk_score += 15
+        factors.append("WHOIS: Domain registered recently (<180 days)")
+
+    if "ac.in" in clean_target or "edu" in clean_target or "gov" in clean_target:
+        risk_score = min(risk_score, 15)
+
+    risk_score = min(100, max(5, risk_score))
+    severity = "Critical" if risk_score >= 75 else ("High" if risk_score >= 50 else ("Medium" if risk_score >= 25 else "Low"))
+    confidence = 95 if vt_data.get("source") == "VirusTotal v3 API" else 85
+
+    geo_isp = f"{geoip_data.get('isp', 'Internet Provider')} ({geoip_data.get('as', 'ASN')}), {geoip_data.get('country', 'Global')}" if geoip_data.get('isp') else "External Infrastructure"
+
+    # MITRE ATT&CK Mapping
     mitre_mappings = []
     if ioc_type in ["IPv4", "IPv6", "Domain", "URL"]:
         mitre_mappings.append({
             "tactic": "Command and Control",
             "technique": "Application Layer Protocol",
             "id": "T1071",
-            "description": "Adversaries may communicate using application layer protocols (HTTP/S, DNS) to blend in with network traffic.",
-            "detection": "Inspect netflow logs, DNS query logs, and proxy logs for anomalous outgoing traffic to unknown endpoints.",
+            "description": f"Adversaries may use HTTP/S/DNS protocols to endpoint infrastructure ({clean_target}).",
+            "detection": "Inspect netflow logs, DNS query logs, and proxy logs for anomalous outgoing traffic.",
             "mitigation": "Enforce strict egress filtering, DNS sinkholing, and proxy content inspection."
         })
         mitre_mappings.append({
             "tactic": "Initial Access",
             "technique": "Spearphishing Link",
             "id": "T1566.002",
-            "description": "Adversaries may send spearphishing emails with links to malicious external web infrastructure.",
+            "description": f"Adversaries may send spearphishing emails with links to web infrastructure ({clean_target}).",
             "detection": "Analyze email gateway logs and web proxy logs for user access to newly observed domains.",
             "mitigation": "Use email security gateways with URL rewriting and anti-phishing defense."
         })
@@ -99,7 +162,7 @@ async def investigate_ioc(req: IOCInvestigateRequest):
             "tactic": "Persistence",
             "technique": "Boot or Logon Autostart Execution",
             "id": "T1547",
-            "description": "Adversaries may configure system settings to automatically execute malware upon system boot or user logon.",
+            "description": "Adversaries may configure system settings to automatically execute malware upon boot or logon.",
             "detection": "Monitor registry modifications to Run/RunOnce keys and Startup folders.",
             "mitigation": "Audit startup entries and enforce signature validation for binaries."
         })
@@ -108,8 +171,8 @@ async def investigate_ioc(req: IOCInvestigateRequest):
             "tactic": "Initial Access",
             "technique": "Exploit Public-Facing Application",
             "id": "T1190",
-            "description": "Adversaries may attempt to take advantage of a weakness in an Internet-facing application or service.",
-            "detection": "Monitor application web server logs for suspicious payloads, unexpected stack traces, and 500 internal errors.",
+            "description": "Adversaries may attempt to take advantage of a weakness in an Internet-facing application.",
+            "detection": "Monitor application web server logs for suspicious payloads and 500 internal errors.",
             "mitigation": "Apply vendor security patches, deploy Web Application Firewalls (WAF), and disable unused services."
         })
 
@@ -119,37 +182,22 @@ async def investigate_ioc(req: IOCInvestigateRequest):
     ]
     links = []
 
-    if ioc_type in ["IPv4", "IPv6"]:
+    ip_display = resolved_ip if resolved_ip else "Resolved Endpoint"
+
+    if ioc_type in ["Domain", "URL", "IPv4", "IPv6"]:
         nodes.extend([
-            {"id": "AS13335 (Cloudflare)", "label": "AS13335 (Cloudflare)", "type": "ASN", "group": "asn"},
-            {"id": "threat-feed-botnet", "label": "Threat Feed: Botnet C2", "type": "Intel", "group": "intel"},
-            {"id": "malicious-host.org", "label": "malicious-host.org", "type": "Domain", "group": "domain"}
+            {"id": ip_display, "label": f"IP: {ip_display}", "type": "IPv4", "group": "ip"},
+            {"id": geo_isp, "label": geo_isp, "type": "ASN", "group": "asn"},
+            {"id": f"VT ({vt_malicious}/{vt_total})", "label": f"VirusTotal: {vt_malicious}/{vt_total} Malicious", "type": "Intel", "group": "intel"}
         ])
         links.extend([
-            {"source": raw_query, "target": "AS13335 (Cloudflare)", "label": "Routed Via"},
-            {"source": raw_query, "target": "threat-feed-botnet", "label": "Flagged By"},
-            {"source": raw_query, "target": "malicious-host.org", "label": "DNS Resolved"}
+            {"source": raw_query, "target": ip_display, "label": "Resolved A Record"},
+            {"source": ip_display, "target": geo_isp, "label": "Hosted On"},
+            {"source": raw_query, "target": f"VT ({vt_malicious}/{vt_total})", "label": "Threat Intel Scan"}
         ])
-    elif ioc_type in ["Domain", "URL"]:
-        nodes.extend([
-            {"id": "104.21.81.193", "label": "104.21.81.193", "type": "IPv4", "group": "ip"},
-            {"id": "ns1.cloudflare.com", "label": "ns1.cloudflare.com", "type": "Nameserver", "group": "dns"},
-            {"id": "payload-hash-34a", "label": "e3b0c44298fc1c149afbf4c8996fb924", "type": "SHA256", "group": "hash"}
-        ])
-        links.extend([
-            {"source": raw_query, "target": "104.21.81.193", "label": "A Record"},
-            {"source": raw_query, "target": "ns1.cloudflare.com", "label": "NS Record"},
-            {"source": raw_query, "target": "payload-hash-34a", "label": "Hosted Payload"}
-        ])
-    else:
-        nodes.extend([
-            {"id": "C2-Server-Infrastructure", "label": "C2 Infra (198.51.100.42)", "type": "IPv4", "group": "ip"},
-            {"id": "phish-campaign-2026", "label": "Spearphishing Campaign #892", "type": "Intel", "group": "intel"}
-        ])
-        links.extend([
-            {"source": raw_query, "target": "C2-Server-Infrastructure", "label": "Associated C2"},
-            {"source": raw_query, "target": "phish-campaign-2026", "label": "Campaign Threat"}
-        ])
+
+    vt_summary_str = f"VirusTotal flagged {vt_malicious}/{vt_total} engines as malicious." if vt_malicious > 0 else f"VirusTotal scan clean (0/{vt_total} malicious flags)."
+    desc = f"Live telemetry scan completed for [{raw_query}]. Resolved to IP [{ip_display}] hosted via {geo_isp}. {vt_summary_str}"
 
     return {
         "ioc": raw_query,
@@ -157,20 +205,27 @@ async def investigate_ioc(req: IOCInvestigateRequest):
         "riskScore": risk_score,
         "severity": severity,
         "confidence": confidence,
+        "resolvedIp": resolved_ip,
+        "hosting": geo_isp,
+        "virusTotal": vt_data,
+        "ssl": ssl_data,
+        "dns": dns_data,
+        "whois": whois_data,
         "firstSeen": (datetime.now(timezone.utc)).strftime("%Y-%m-%d %H:%M:%S UTC"),
         "lastSeen": (datetime.now(timezone.utc)).strftime("%Y-%m-%d %H:%M:%S UTC"),
-        "source": "NullTrace Threat Intel Engine",
-        "tags": [ioc_type, "Suspicious Infrastructure", "SOC Analyzed"],
-        "description": f"Verified indicator of compromise [{raw_query}] analyzed across public threat intelligence feeds.",
+        "source": "NullTrace Live Threat Intel Engine",
+        "tags": [ioc_type, "Live Scanned", f"VT {vt_malicious}/{vt_total}"],
+        "description": desc,
         "mitreMappings": mitre_mappings,
         "correlation": {
             "nodes": nodes,
             "links": links
         },
         "timeline": [
-            {"time": "2026-08-01 10:14:02 UTC", "event": "First observed in external DNS telemetry", "type": "dns"},
-            {"time": "2026-08-03 14:22:19 UTC", "event": "Flagged by 4 threat intelligence providers", "type": "intel"},
-            {"time": "2026-08-06 21:30:00 UTC", "event": "SOC investigation case initialized", "type": "case"}
+            {"time": (datetime.now(timezone.utc)).strftime("%Y-%m-%d %H:%M:%S UTC"), "event": f"Real-time DNS query resolved {raw_query} -> {ip_display}", "type": "dns"},
+            {"time": (datetime.now(timezone.utc)).strftime("%Y-%m-%d %H:%M:%S UTC"), "event": f"VirusTotal 70+ Vendor Scan: {vt_malicious}/{vt_total} malicious detections", "type": "intel"},
+            {"time": (datetime.now(timezone.utc)).strftime("%Y-%m-%d %H:%M:%S UTC"), "event": f"Host ISP identified: {geo_isp}", "type": "intel"},
+            {"time": (datetime.now(timezone.utc)).strftime("%Y-%m-%d %H:%M:%S UTC"), "event": "SOC investigation case initialized", "type": "case"}
         ]
     }
 

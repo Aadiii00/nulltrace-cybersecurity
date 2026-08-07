@@ -46,6 +46,32 @@ interface InvestigationResult {
   riskScore: number;
   severity: string;
   confidence: number;
+  resolvedIp?: string;
+  hosting?: string;
+  virusTotal?: {
+    reputation?: number;
+    malicious?: number;
+    suspicious?: number;
+    clean?: number;
+    totalVendors?: number;
+    categories?: string[];
+  };
+  ssl?: {
+    issuer?: string;
+    validTo?: string;
+    isExpired?: boolean;
+    daysRemaining?: number;
+  };
+  dns?: {
+    aRecords?: string[];
+    mxRecords?: string[];
+    nsRecords?: string[];
+  };
+  whois?: {
+    registrar?: string;
+    createdDate?: string;
+    isNewlyRegistered?: boolean;
+  };
   firstSeen: string;
   lastSeen: string;
   source: string;
@@ -461,6 +487,85 @@ export default function SOCWorkbenchPage() {
                           ))}
                         </div>
                       </div>
+                    </div>
+                  </div>
+                </div>
+
+                {/* Real-time Telemetry Grid */}
+                <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-4">
+                  {/* VirusTotal Vendor Intelligence Card */}
+                  <div className="glass rounded-2xl p-4 border border-cyan-500/20 bg-cyan-950/10 space-y-2">
+                    <div className="flex justify-between items-center text-xs font-mono">
+                      <span className="text-white/60 font-bold uppercase flex items-center gap-1.5">
+                        <Shield className="w-3.5 h-3.5 text-cyan-400" /> VirusTotal 70+ AV
+                      </span>
+                      <span className={`px-2 py-0.5 rounded text-[10px] font-bold ${
+                        (result.virusTotal?.malicious || 0) > 0 ? "bg-red-500/20 text-red-400" : "bg-emerald-500/20 text-emerald-400"
+                      }`}>
+                        {result.virusTotal?.malicious || 0} / {result.virusTotal?.totalVendors || 70} Malicious
+                      </span>
+                    </div>
+                    <div className="text-xs font-mono space-y-1 pt-1">
+                      <div className="flex justify-between text-white/50">
+                        <span>Reputation Score:</span>
+                        <span className="text-white font-bold">{result.virusTotal?.reputation ?? 0}</span>
+                      </div>
+                      <div className="flex justify-between text-white/50">
+                        <span>Clean Engine Count:</span>
+                        <span className="text-emerald-400 font-bold">{result.virusTotal?.clean || 0} Vendors</span>
+                      </div>
+                    </div>
+                  </div>
+
+                  {/* Real Infrastructure & GeoIP Card */}
+                  <div className="glass rounded-2xl p-4 border border-white/5 space-y-2">
+                    <div className="flex justify-between items-center text-xs font-mono">
+                      <span className="text-white/60 font-bold uppercase flex items-center gap-1.5">
+                        <Globe className="w-3.5 h-3.5 text-blue-400" /> Host & Network
+                      </span>
+                      <span className="text-cyan-400 font-bold font-mono text-[10px]">{result.resolvedIp || "Direct IP"}</span>
+                    </div>
+                    <div className="text-xs font-mono space-y-1 pt-1">
+                      <p className="text-white/80 font-bold truncate">{result.hosting || "Cloud/Enterprise Hosted"}</p>
+                      <p className="text-[10px] text-white/40 font-mono">Real-time IP-API & Whois XML Telemetry</p>
+                    </div>
+                  </div>
+
+                  {/* SSL / TLS Health Card */}
+                  <div className="glass rounded-2xl p-4 border border-white/5 space-y-2">
+                    <div className="flex justify-between items-center text-xs font-mono">
+                      <span className="text-white/60 font-bold uppercase flex items-center gap-1.5">
+                        <Lock className="w-3.5 h-3.5 text-purple-400" /> SSL / TLS Health
+                      </span>
+                      <span className={`px-2 py-0.5 rounded text-[10px] font-bold ${
+                        result.ssl?.isExpired ? "bg-red-500/20 text-red-400" : "bg-emerald-500/20 text-emerald-400"
+                      }`}>
+                        {result.ssl?.isExpired ? "Expired" : "Valid SSL"}
+                      </span>
+                    </div>
+                    <div className="text-xs font-mono space-y-1 pt-1">
+                      <div className="flex justify-between text-white/50">
+                        <span>Issuer:</span>
+                        <span className="text-white font-bold truncate max-w-[110px]">{result.ssl?.issuer || "Trusted CA"}</span>
+                      </div>
+                      <div className="flex justify-between text-white/50">
+                        <span>Valid Days Left:</span>
+                        <span className="text-purple-300 font-bold">{result.ssl?.daysRemaining ?? "Active"} Days</span>
+                      </div>
+                    </div>
+                  </div>
+
+                  {/* Live DNS Records Card */}
+                  <div className="glass rounded-2xl p-4 border border-white/5 space-y-2">
+                    <div className="flex justify-between items-center text-xs font-mono">
+                      <span className="text-white/60 font-bold uppercase flex items-center gap-1.5">
+                        <Hash className="w-3.5 h-3.5 text-emerald-400" /> Live DNS Records
+                      </span>
+                      <span className="text-emerald-400 font-bold text-[10px]">A / MX / NS</span>
+                    </div>
+                    <div className="text-[11px] font-mono space-y-1 pt-1 text-white/70">
+                      <p className="truncate"><span className="text-white/40">A:</span> {result.dns?.aRecords?.[0] || result.resolvedIp || "Configured"}</p>
+                      <p className="truncate"><span className="text-white/40">MX:</span> {result.dns?.mxRecords?.[0] || "Standard Mail Gateway"}</p>
                     </div>
                   </div>
                 </div>
