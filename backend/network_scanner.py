@@ -792,28 +792,57 @@ def is_trusted_domain(target: str) -> bool:
     clean = target.strip().lower()
     return any(re.search(pattern, clean) for pattern in TRUSTED_DOMAIN_PATTERNS)
 
+# ── High-Risk Illicit Domains Blacklist (Gambling, Piracy, Scams) ────────────
+HIGH_RISK_ILLICIT_PATTERNS = [
+    r'winbuzz', r'rummycircle', r'rummy', r'bet365', r'1xbet', r'stake', r'dafabet', r'lottery', r'jackpot', r'casino', r'poker', r'satta', r'matka', r'khelo',
+    r'movies4u', r'9xmovies', r'filmyzilla', r'123movies', r'movierulz', r'torrent', r'yts', r'piratebay', r'fmovies', r'hdhub4u', r'bolly4u', r'katmovie',
+    r'free-coins', r'crypto-claim', r'instant-loan-scam', r'phish', r'scam', r'spoof', r'hack-account', r'free-giftcard', r'unclaimed-funds'
+]
+
+def is_high_risk_illicit_domain(target: str) -> bool:
+    clean = target.strip().lower()
+    return any(re.search(pattern, clean) for pattern in HIGH_RISK_ILLICIT_PATTERNS)
+
 # ── AI Security Insights ──────────────────────────────────────────────────────
 async def generate_ai_security_insights(target: str, risk_score: int, factors: list, open_ports: list, vt_data: dict, whois_data: dict) -> dict:
     contrib_findings = factors[:4] if factors else ["No major high-risk indicators flagged during port probing."]
+    is_illicit = is_high_risk_illicit_domain(target)
     
     attack_vectors = []
-    if any("FTP" in f or "Telnet" in f or "SMB" in f or "RDP" in f for f in factors):
-        attack_vectors.append("Brute-force credential spraying & cleartext sniffing")
-    if whois_data.get("isNewlyRegistered"):
-        attack_vectors.append("Phishing impersonation using disposable domain infrastructure")
-    if not attack_vectors:
-        attack_vectors.append("Standard web application targeting & vulnerability scan automated bots")
+    if is_illicit:
+        attack_vectors.append("Drive-by malware downloads & rogue ad network scripts")
+        attack_vectors.append("Financial fraud & credential theft via unverified payment gateways")
+        attack_vectors.append("Phishing redirection and credential harvesting")
+    else:
+        if any("FTP" in f or "Telnet" in f or "SMB" in f or "RDP" in f for f in factors):
+            attack_vectors.append("Brute-force credential spraying & cleartext sniffing")
+        if whois_data.get("isNewlyRegistered"):
+            attack_vectors.append("Phishing impersonation using disposable domain infrastructure")
+        if not attack_vectors:
+            attack_vectors.append("Standard web application targeting & vulnerability scan automated bots")
 
-    recommended_actions = [
-        "Enforce strict firewall rules blocking unused inbound management ports.",
-        "Implement Multi-Factor Authentication (MFA) across remote services.",
-        "Set up automated monitoring for DNS policies (SPF/DMARC) and SSL certificate renewal."
-    ]
+    if is_illicit:
+        recommended_actions = [
+            "Block domain across corporate/network firewalls and enterprise DNS filters.",
+            "Do not enter credit card, bank, or personal identity credentials on this target.",
+            "Quarantine and scan any files, apps, or media downloaded from this domain."
+        ]
+    else:
+        recommended_actions = [
+            "Enforce strict firewall rules blocking unused inbound management ports.",
+            "Implement Multi-Factor Authentication (MFA) across remote services.",
+            "Set up automated monitoring for DNS policies (SPF/DMARC) and SSL certificate renewal."
+        ]
 
-    priority = "HIGH" if risk_score >= 40 else "LOW"
+    priority = "CRITICAL" if is_illicit or risk_score >= 70 else ("HIGH" if risk_score >= 40 else "LOW")
+    summary = (
+        f"CRITICAL THREAT: Target '{target}' is categorized as an unregulated high-risk illicit domain (unlicensed gambling, pirated media, or financial scam platform). Operating on this domain poses severe malvertising drive-by infection, financial fraud, and credential theft risks."
+        if is_illicit else
+        f"Target '{target}' received a threat risk score of {risk_score}/100 based on active network reconnaissance and threat intelligence feeds."
+    )
 
     return {
-        "summary": f"Target '{target}' received a threat risk score of {risk_score}/100 based on active network reconnaissance and threat intelligence feeds.",
+        "summary": summary,
         "contributingFindings": contrib_findings,
         "potentialAttackVectors": attack_vectors,
         "recommendedActions": recommended_actions,
@@ -843,6 +872,7 @@ async def network_scan(body: NetworkScanRequest):
     scan_start = time.time()
     domain_to_check = None if is_ip else clean_target
     is_whitelisted = is_trusted_domain(clean_target) if domain_to_check else False
+    is_illicit = is_high_risk_illicit_domain(clean_target) if domain_to_check else False
 
     ports_task = scan_ports(ip)
     geoip_task = get_geoip_and_ipinfo(ip)
@@ -923,6 +953,12 @@ async def network_scan(body: NetworkScanRequest):
     if not is_whitelisted and ssl_data.get("isExpired"):
         risk_score += 15
         factors.append("[WARN] SSL certificate is expired or invalid")
+
+    if is_illicit:
+        risk_score = max(risk_score, 95)
+        factors.append("[CRITICAL] Unregulated High-Risk Domain Category (Illicit Gambling / Pirated Media / Fraud Risk)")
+        factors.append("[HIGH] Drive-by Malvertising & Rogue Ad Network Injection Risk")
+        factors.append("[WARN] High Risk of Financial Fraud & Unverified Identity Operations")
 
     if is_whitelisted:
         factors.append("[TRUSTED] Verified Major Infrastructure Domain (Google / Microsoft / Apple / Cloudflare / GitHub)")
