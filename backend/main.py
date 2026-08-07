@@ -20,9 +20,11 @@ app.add_middleware(
 # ── Network Scanner (no ML deps needed, always available) ─────────────────────
 from network_scanner import router as network_scanner_router
 from subdomain_discovery import router as subdomain_discovery_router
+from soc_workbench import router as soc_workbench_router
 app.include_router(network_scanner_router)
 app.include_router(subdomain_discovery_router)
-print("[Nulltrace] OK Network scanner and Subdomain discovery routers loaded.")
+app.include_router(soc_workbench_router)
+print("[Nulltrace] OK Network scanner, Subdomain discovery, and SOC Workbench routers loaded.")
 
 # ── Image Deepfake Detector (requires transformers + pillow) ──────────────────
 detector = None
