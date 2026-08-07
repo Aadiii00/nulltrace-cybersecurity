@@ -1,5 +1,5 @@
 import { NextResponse } from 'next/server';
-import { model } from '@/lib/gemini';
+import { groqChat } from '@/lib/groq';
 
 const SYSTEM_PROMPT = `You are "Cyber Sentinel," the advanced AI brain of the DetectoAI Threat Platform.
 Your purpose is to assist users in identifying digital threats, explaining security risks, and providing actionable defense advice.
@@ -22,28 +22,15 @@ export async function POST(req: Request) {
   try {
     const { messages } = await req.json();
 
-    // Use a separate model instance with system instructions if needed, 
-    // or pass it as part of the initial chat start if supported by the library version.
-    // In @google/generative-ai, systemInstruction is passed at model creation.
-    // For this implementation, we'll prepend it to the history or use a specific model.
-    
-    const chat = model.startChat({
-      history: [
-        { role: 'user', parts: [{ text: SYSTEM_PROMPT }] },
-        { role: 'model', parts: [{ text: "Acknowledged. Cyber Sentinel online. Defense protocols initialized. Standing by for threat analysis." }] },
-        ...messages.slice(0, -1).map((msg: any) => ({
-          role: msg.role === 'user' ? 'user' : 'model',
-          parts: [{ text: msg.content }],
-        })),
-      ],
-      generationConfig: {
-        maxOutputTokens: 1000,
-        temperature: 0.7,
-      },
-    });
+    const groqMessages = [
+      { role: 'system' as const, content: SYSTEM_PROMPT },
+      ...messages.map((msg: any) => ({
+        role: msg.role === 'user' ? 'user' as const : 'assistant' as const,
+        content: msg.content,
+      })),
+    ];
 
-    const result = await chat.sendMessage(messages[messages.length - 1].content);
-    const responseText = result.response.text();
+    const responseText = await groqChat(groqMessages);
 
     return NextResponse.json({ role: 'assistant', content: responseText });
   } catch (error: any) {

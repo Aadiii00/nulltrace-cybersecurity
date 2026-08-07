@@ -1,5 +1,5 @@
 import { NextResponse } from 'next/server';
-import { model } from '@/lib/gemini';
+import { groqGenerate } from '@/lib/groq';
 import { createClient } from '@/lib/supabase/server';
 import { ThreatAnalysis } from '@/types/threats';
 
@@ -48,10 +48,9 @@ export async function POST(req: Request) {
       }
     `;
 
-    console.log('Gemini prompt:', prompt);
-    const result = await model.generateContent(prompt);
-    const responseText = result.response.text();
-    console.log('Gemini raw response:', responseText);
+    console.log('Groq prompt:', prompt);
+    const responseText = await groqGenerate(prompt);
+    console.log('Groq raw response:', responseText);
     
     // Extract JSON if model wraps it in markdown
     const jsonMatch = responseText.match(/\{[\s\S]*\}/);

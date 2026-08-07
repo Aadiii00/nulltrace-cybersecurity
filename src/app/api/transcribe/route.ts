@@ -1,5 +1,5 @@
 import { NextResponse } from 'next/server';
-import { model } from '@/lib/gemini';
+import { groqGenerate } from '@/lib/groq';
 import { createClient } from '@/lib/supabase/server';
 
 const DEEPGRAM_API_KEY = process.env.DEEPGRAM_API_KEY;
@@ -65,8 +65,8 @@ export async function POST(req: Request) {
       return NextResponse.json({ error: 'No speech detected in the audio.' }, { status: 422 });
     }
 
-    // ── 6. Analyse transcript with Gemini ───────────────────────────────────
-    const geminiPrompt = `
+    // ── 6. Analyse transcript with Groq ─────────────────────────────────────
+    const groqPrompt = `
       You are "Cyber Sentinel," the advanced AI Threat Intelligence engine for DetectoAI.
       Analyse the following VOICE TRANSCRIPT for digital threats.
       Focus on: phishing, social engineering, urgency tactics, recruitment scams, OTP fraud,
@@ -87,12 +87,11 @@ export async function POST(req: Request) {
       }
     `;
 
-    const geminiResult = await model.generateContent(geminiPrompt);
-    const geminiText = geminiResult.response.text();
-    const jsonMatch = geminiText.match(/\{[\s\S]*\}/);
+    const groqText = await groqGenerate(groqPrompt);
+    const jsonMatch = groqText.match(/\{[\s\S]*\}/);
 
     if (!jsonMatch) {
-      console.error('Gemini non-JSON response:', geminiText);
+      console.error('Groq non-JSON response:', groqText);
       throw new Error('Failed to extract JSON from AI response.');
     }
 

@@ -6,6 +6,7 @@ import Footer from "@/components/Footer";
 import { TOOLS, type ToolId } from "@/lib/constants";
 import Link from "next/link";
 import { ShieldAlert, Globe2, Briefcase, Mail, Camera, KeyRound, Users, ArrowRight, Search } from "lucide-react";
+import DeepfakeDetector from "@/components/DeepfakeDetector";
 
 export default function ToolsPage() {
   const [searchTerm, setSearchTerm] = useState("");
@@ -82,6 +83,11 @@ export default function ToolsPage() {
             )}
           </div>
         </section>
+
+        {/* Deepfake Detector Section */}
+        <div className="border-t border-white/5">
+          <DeepfakeDetector />
+        </div>
       </main>
 
       <Footer />
