@@ -1,0 +1,8 @@
+# Ignore local virtual environments and caches
+backend/venv/
+venv/
+node_modules/
+.next/
+.env*
+__pycache__/
+*.pyc

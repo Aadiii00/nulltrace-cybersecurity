@@ -1,0 +1,6 @@
+huggingface-hub
+pillow
+transformers
+torch
+librosa
+soundfile
