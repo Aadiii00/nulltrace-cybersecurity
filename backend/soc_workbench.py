@@ -102,31 +102,62 @@ async def investigate_ioc(req: IOCInvestigateRequest):
     dns_data = results[3] if isinstance(results[3], dict) else {}
     ssl_data = results[4] if isinstance(results[4], dict) else {}
 
-    # Real Risk Score Calculation
+    # Multi-Vector Real Risk Score Calculation
     vt_malicious = vt_data.get("malicious", 0)
     vt_total = vt_data.get("totalEngines", 70)
 
-    risk_score = 10
+    risk_score = 0
     factors = []
 
+    # 1. VirusTotal Detections
     if vt_malicious > 0:
-        risk_score += min(75, vt_malicious * 25)
+        ratio = vt_malicious / max(vt_total, 1)
+        risk_score += int(ratio * 80) + 15
         factors.append(f"VirusTotal: Flagged malicious by {vt_malicious}/{vt_total} security vendors")
 
+    # 2. Threat Keyword / Suspicious Pattern Heuristics
+    suspicious_keywords = ["malware", "phishing", "ransomware", "trojan", "exploit", "canary", "attack", "lockbit", "c2", "beacon", "shell", "botnet", "hack", "stealer", "payload", "cve", "virus", "worm", "spyware"]
+    query_lower = raw_query.lower()
+    keyword_matches = [kw for kw in suspicious_keywords if kw in query_lower]
+    if keyword_matches:
+        risk_score += 50 + min(30, len(keyword_matches) * 10)
+        factors.append(f"Threat Heuristics: Query matches malicious signature pattern ({', '.join(keyword_matches)})")
+
+    # 3. File Hashes & CVEs
+    if ioc_type in ["SHA256", "SHA1", "MD5"]:
+        if risk_score == 0:
+            risk_score += 70
+        factors.append(f"Binary Artifact: High-risk {ioc_type} checksum requiring quarantine inspection")
+    elif ioc_type == "CVE ID":
+        risk_score = max(risk_score, 85)
+        factors.append("Vulnerability ID: Common Vulnerabilities and Exposures (CVE) exploitation vector")
+
+    # 4. Suspicious TLDs
+    suspicious_tlds = [".xyz", ".top", ".online", ".club", ".site", ".ru", ".cn", ".tk", ".ml", ".ga", ".cf", ".gq", ".work", ".zip", ".mov"]
+    if any(clean_target.lower().endswith(tld) for tld in suspicious_tlds):
+        risk_score += 25
+        factors.append("Domain Intelligence: Registered under high-abuse Top Level Domain (TLD)")
+
+    # 5. SSL & WHOIS Indicators
     if ssl_data.get("isExpired"):
         risk_score += 20
         factors.append("SSL Certificate: Certificate is expired or invalid")
 
     if whois_data.get("isNewlyRegistered"):
-        risk_score += 15
+        risk_score += 20
         factors.append("WHOIS: Domain registered recently (<180 days)")
 
-    if "ac.in" in clean_target or "edu" in clean_target or "gov" in clean_target:
-        risk_score = min(risk_score, 15)
+    # 6. Trusted Educational / Government exceptions
+    if any(clean_target.lower().endswith(dom) for dom in [".gov", ".edu", ".ac.in", "google.com", "microsoft.com", "github.com"]):
+        if not keyword_matches and vt_malicious == 0:
+            risk_score = min(risk_score, 10)
+
+    if risk_score == 0:
+        risk_score = 15
 
     risk_score = min(100, max(5, risk_score))
     severity = "Critical" if risk_score >= 75 else ("High" if risk_score >= 50 else ("Medium" if risk_score >= 25 else "Low"))
-    confidence = 95 if vt_data.get("source") == "VirusTotal v3 API" else 85
+    confidence = 95 if vt_data.get("source") == "VirusTotal v3 API" else (90 if keyword_matches else 80)
 
     geo_isp = f"{geoip_data.get('isp', 'Internet Provider')} ({geoip_data.get('as', 'ASN')}), {geoip_data.get('country', 'Global')}" if geoip_data.get('isp') else "External Infrastructure"
 
