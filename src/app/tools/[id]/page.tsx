@@ -191,7 +191,7 @@ export default function ToolPage() {
               <div className="flex items-center justify-between">
                 <div className="flex items-center space-x-2 text-xs text-foreground/30 font-sans">
                   <Info className="w-4 h-4" />
-                  <span>Powered by Gemini 2.5 Flash Intelligence</span>
+                  <span>NullTrace AI Threat Engine</span>
                 </div>
                 <button
                   onClick={handleAnalyze}

@@ -78,29 +78,25 @@ export default function HeroSection({ onResult, onLoading, activeTab, onTabChang
   };
 
   return (
-    <section className="relative pt-20 pb-16 px-6 overflow-hidden">
+    <section className="relative pt-12 pb-12 px-6 overflow-hidden">
       {/* Background Glows */}
       <div className="absolute top-0 left-1/2 -translate-x-1/2 w-full h-full -z-10 overflow-hidden pointer-events-none">
         <div className="absolute -top-1/4 -left-1/4 w-1/2 h-1/2 border-primary/20 bg-primary/20 blur-[120px] rounded-full" />
         <div className="absolute -bottom-1/4 -right-1/4 w-1/2 h-1/2 border-secondary/20 bg-secondary/20 blur-[100px] rounded-full" />
       </div>
 
-      <div className="max-w-4xl mx-auto text-center space-y-8">
+      <div className="max-w-4xl mx-auto text-center space-y-6">
         <motion.div
           initial={{ opacity: 0, y: 20 }}
           animate={{ opacity: 1, y: 0 }}
           transition={{ duration: 0.6 }}
         >
-          <div className="inline-flex items-center space-x-2 glass px-4 py-2 rounded-full mb-6 neon-border">
-            <Zap className="w-4 h-4 text-primary fill-current" />
-            <span className="text-xs font-bold tracking-wider uppercase text-primary neon-text font-display">Powered by Gemini Cyber Intelligence</span>
-          </div>
           <h1 className="text-4vh md:text-6xl font-display font-bold leading-tight">
             Analyze Anything. <span className="gradient-text">Trust Nothing.</span>
             <br />
             Decide Smart.
           </h1>
-          <p className="mt-6 text-foreground/60 text-lg max-w-2xl mx-auto font-sans leading-relaxed">
+          <p className="mt-5 text-foreground/60 text-lg max-w-2xl mx-auto font-sans leading-relaxed">
             <span className="font-mono text-primary font-bold neon-text">[Nulltrace]</span> is your cyber sentinel — scan messages, URLs, voice, and files 
             to neutralize phishing, scams, and social engineering before they reach you.
           </p>
