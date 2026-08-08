@@ -41,6 +41,11 @@ venv/
 **/__pycache__/
 **/*.pyc
 
+# PyInstaller
+sentinel/build/
+sentinel/dist/
+*.spec
+
 # Environment
 .env
 .env.local
@@ -48,3 +53,4 @@ venv/
 .env.test.local
 .env.production.local
 .env.local.sample
+

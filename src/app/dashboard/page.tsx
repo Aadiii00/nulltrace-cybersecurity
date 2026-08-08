@@ -344,6 +344,30 @@ export default function Dashboard() {
 
         {/* Forensic Engines Grid */}
         <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
+          {/* Card 0: NullTrace Sentinel */}
+          <div className="glass rounded-[32px] p-8 border-white/5 relative overflow-hidden flex flex-col justify-between group shadow-xl border border-cyan-500/20">
+            <div className="absolute top-0 right-0 w-32 h-32 bg-cyan-500/10 blur-2xl -z-10 group-hover:scale-150 transition-transform duration-500" />
+            <div>
+              <div className="flex items-center gap-4 mb-4">
+                <div className="w-12 h-12 rounded-2xl bg-cyan-500/10 flex items-center justify-center border border-cyan-500/30 text-cyan-400">
+                  <Shield className="w-6 h-6" />
+                </div>
+                <div>
+                  <span className="text-[10px] font-mono font-bold text-cyan-400 bg-cyan-500/10 px-2 py-0.5 rounded uppercase border border-cyan-500/20">Windows Agent</span>
+                  <h3 className="text-xl font-display font-bold text-white">💻 NullTrace Sentinel</h3>
+                </div>
+              </div>
+              <p className="text-foreground/40 text-sm leading-relaxed mb-6">
+                Real-time Windows Desktop Protection Agent. Download monitoring, USB auto-scanning, powershell process inspection, and 30s telemetry heartbeat.
+              </p>
+            </div>
+            <div className="flex flex-wrap items-center gap-3">
+              <Link href="/endpoints" className="bg-cyan-500 text-black px-5 py-2.5 rounded-xl text-xs font-bold uppercase tracking-widest hover:bg-cyan-400 transition-all shadow-md shadow-cyan-500/10">
+                View Endpoints
+              </Link>
+            </div>
+          </div>
+
           {/* Card 1: AI Malware Analysis */}
           <div className="glass rounded-[32px] p-8 border-white/5 relative overflow-hidden flex flex-col justify-between group shadow-xl">
             <div className="absolute top-0 right-0 w-32 h-32 bg-cyan-500/5 blur-2xl -z-10 group-hover:scale-150 transition-transform duration-500" />

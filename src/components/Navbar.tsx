@@ -2,7 +2,7 @@
 
 import { useEffect, useState } from "react";
 import { motion } from "framer-motion";
-import { Shield, Zap, LayoutDashboard, Search, Menu, X, Mic, Globe, ChevronDown, ShieldAlert, Bug } from "lucide-react";
+import { Shield, Zap, LayoutDashboard, Search, Menu, X, Mic, Globe, ChevronDown, ShieldAlert, Bug, Laptop } from "lucide-react";
 import Link from "next/link";
 import { supabase } from "@/lib/supabase";
 import { User } from "@supabase/supabase-js";
@@ -48,6 +48,10 @@ export default function Navbar() {
             <Link href="/dashboard" className="hover:text-primary transition-colors flex items-center space-x-1 hover:neon-border px-2 py-1 rounded">
               <LayoutDashboard className="w-3.5 h-3.5" />
               <span>Dashboard</span>
+            </Link>
+            <Link href="/endpoints" className="hover:text-cyan-400 transition-colors flex items-center space-x-1 hover:neon-border px-2 py-1 rounded">
+              <Laptop className="w-3.5 h-3.5 text-cyan-400" />
+              <span>💻 Endpoints</span>
             </Link>
             <Link href="/malware-analysis" className="hover:text-cyan-400 transition-colors flex items-center space-x-1 hover:neon-border px-2 py-1 rounded">
               <Bug className="w-3.5 h-3.5 text-cyan-400" />
