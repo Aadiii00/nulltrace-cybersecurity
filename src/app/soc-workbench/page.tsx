@@ -650,31 +650,6 @@ export default function SOCWorkbenchPage() {
         {/* TAB 3: MITRE ATT&CK */}
         {activeTab === "mitre" && (
           <div className="space-y-6">
-            {/* Quick Threat Presets */}
-            <div className="glass rounded-2xl p-4 border border-cyan-500/20 bg-cyan-950/10 flex flex-col md:flex-row items-center justify-between gap-4">
-              <div>
-                <h4 className="text-xs font-mono font-bold text-cyan-300 uppercase tracking-wider">Interactive Threat Scenario Demos</h4>
-                <p className="text-[11px] text-white/50 font-sans mt-0.5">Click any threat scenario to load verified MITRE ATT&CK tactics & mitigation strategies:</p>
-              </div>
-
-              <div className="flex flex-wrap gap-2">
-                {[
-                  { name: "💥 Ransomware Outbreak", query: "LockBit Ransomware Canary Encryptor" },
-                  { name: "📧 Spearphishing Attack", query: "phishing-bank-login-secure.xyz" },
-                  { name: "🐛 CVE Exploit", query: "CVE-2026-1180 Remote Execution" },
-                  { name: "💾 Binary Malware", query: "e3b0c44298fc1c149afbf4c8996fb924" },
-                  { name: "🌐 C2 Beaconing", query: "185.220.101.5 C2 Infrastructure" }
-                ].map((demo) => (
-                  <button
-                    key={demo.name}
-                    onClick={() => { setSearchQuery(demo.query); handleInvestigate(demo.query); }}
-                    className="px-3 py-1.5 rounded-xl bg-white/5 hover:bg-cyan-500/20 border border-white/10 text-xs font-mono text-cyan-300 font-bold transition-all hover:border-cyan-400"
-                  >
-                    {demo.name}
-                  </button>
-                ))}
-              </div>
-            </div>
 
             <div className="glass rounded-2xl p-6 border border-white/5 space-y-4">
               <div className="flex justify-between items-center">

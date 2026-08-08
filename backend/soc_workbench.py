@@ -161,11 +161,13 @@ async def investigate_ioc(req: IOCInvestigateRequest):
 
     geo_isp = f"{geoip_data.get('isp', 'Internet Provider')} ({geoip_data.get('as', 'ASN')}), {geoip_data.get('country', 'Global')}" if geoip_data.get('isp') else "External Infrastructure"
 
-    # Comprehensive MITRE ATT&CK Threat Mapping Generator
+    # Live Telemetry-Driven MITRE ATT&CK Decision Engine
     mitre_mappings = []
     q_lower = raw_query.lower()
+    is_newly_registered = whois_data.get("isNewlyRegistered", False)
+    is_ssl_expired = ssl_data.get("isExpired", False)
 
-    # 1. Ransomware & Anti-Encryption Tactics (Canary / LockBit / Encryption)
+    # 1. Ransomware & Anti-Encryption Tactics (Canary / Ransomware signatures)
     if any(kw in q_lower for kw in ["ransomware", "lockbit", "canary", "encrypt", "vault", "blackcat"]):
         mitre_mappings.extend([
             {
@@ -202,15 +204,15 @@ async def investigate_ioc(req: IOCInvestigateRequest):
             }
         ])
 
-    # 2. Phishing & Social Engineering Tactics
-    elif any(kw in q_lower for kw in ["phish", "email", "login", "bank", "otp", "fake", "job"]):
+    # 2. Phishing & Infrastructure Acquisition Tactics (Newly registered WHOIS / Phishing indicators)
+    elif is_newly_registered or any(kw in q_lower for kw in ["phish", "email", "login", "bank", "otp", "fake", "job"]):
         mitre_mappings.extend([
             {
                 "tactic": "Initial Access",
                 "technique": "Spearphishing Link",
                 "id": "T1566.002",
-                "description": f"Adversaries send targeted emails containing links to credential harvesting sites ({clean_target}).",
-                "detection": "Analyze email gateway security logs and web proxy URL inspection records.",
+                "description": f"Adversaries send targeted emails containing links pointing to domain [{clean_target}].",
+                "detection": "Analyze email gateway security logs, WHOIS registration age (<180 days), and proxy URL inspection records.",
                 "mitigation": "Deploy automated URL rewriting, DMARC/SPF verification, and Security Awareness Training."
             },
             {
@@ -218,15 +220,15 @@ async def investigate_ioc(req: IOCInvestigateRequest):
                 "technique": "Input Capture: Phishing Landing Page",
                 "id": "T1056.001",
                 "description": "Adversaries host replica login portals to capture user credentials and MFA session tokens.",
-                "detection": "Monitor outbound proxy traffic to newly registered domains (<30 days old).",
+                "detection": "Monitor outbound proxy traffic to newly registered domains (<180 days old).",
                 "mitigation": "Enforce FIDO2 / WebAuthn hardware-based Multi-Factor Authentication."
             },
             {
                 "tactic": "Resource Development",
                 "technique": "Acquire Infrastructure: Domains",
                 "id": "T1583.001",
-                "description": "Adversaries acquire spoofed look-alike domains to deceive users.",
-                "detection": "Perform continuous brand domain monitoring and typo-squatting audits.",
+                "description": f"Adversaries acquire spoofed look-alike domain infrastructure [{clean_target}].",
+                "detection": "Perform continuous brand domain monitoring and WHOIS domain age checks.",
                 "mitigation": "Register protective brand domain variations and sinkhole malicious DNS lookups."
             }
         ])
