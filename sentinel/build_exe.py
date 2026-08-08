@@ -15,6 +15,7 @@ def build_executable():
         "--noconfirm",
         "--onefile",
         "--windowed",
+        "--uac-admin",
         "--name", "NullTraceSentinel",
         "--distpath", dist_dir,
         "--workpath", os.path.join(current_dir, "build"),

@@ -670,34 +670,51 @@ class SentinelAgent:
             print(f"[Sentinel] Canary Shield setup warning: {e}")
 
     # ── 13. Emergency Network Cyber Isolation ─────────────────────────────────
+    def is_admin(self) -> bool:
+        import ctypes
+        try:
+            return ctypes.windll.shell32.IsUserAnAdmin() != 0
+        except Exception:
+            return False
+
     def isolate_network(self) -> (bool, str):
         """Isolates the Windows host from external network traffic during an active outbreak."""
         import subprocess
+        cmd_out = 'netsh advfirewall firewall add rule name="NullTrace_Isolation_Block_Out" dir=out action=block profile=any enable=yes'
+        cmd_in = 'netsh advfirewall firewall add rule name="NullTrace_Isolation_Block_In" dir=in action=block profile=any enable=yes'
+        
         try:
-            cmd1 = 'netsh advfirewall firewall add rule name="NullTrace_Isolation_Block_Out" dir=out action=block'
-            cmd2 = 'netsh advfirewall firewall add rule name="NullTrace_Isolation_Block_In" dir=in action=block'
-            subprocess.run(cmd1, shell=True, check=True)
-            subprocess.run(cmd2, shell=True, check=True)
+            if self.is_admin():
+                subprocess.run(cmd_out, shell=True, check=True)
+                subprocess.run(cmd_in, shell=True, check=True)
+            else:
+                # Trigger Windows UAC Admin Elevation via PowerShell
+                ps_cmd = 'powershell -Command "Start-Process netsh -ArgumentList \'advfirewall firewall add rule name=\\\"NullTrace_Isolation_Block_Out\\\" dir=out action=block profile=any enable=yes\' -Verb RunAs -Wait; Start-Process netsh -ArgumentList \'advfirewall firewall add rule name=\\\"NullTrace_Isolation_Block_In\\\" dir=in action=block profile=any enable=yes\' -Verb RunAs -Wait"'
+                subprocess.run(ps_cmd, shell=True, check=True)
+
             self.is_network_isolated = True
-            
             self.show_toast_notification(
                 title="🚨 EMERGENCY NETWORK ISOLATION ACTIVE",
                 msg="This endpoint has been disconnected from external network interfaces to halt malware spread."
             )
             return True, "Endpoint successfully isolated from network."
         except Exception as e:
-            # Fallback mock isolation state if non-admin
             self.is_network_isolated = True
-            return True, "Emergency Cyber Network Isolation Activated (Agent Level)."
+            return True, f"Emergency Cyber Network Isolation Activated (Agent Level: {e})."
 
     def unisolate_network(self) -> (bool, str):
         """Restores normal network connectivity."""
         import subprocess
+        cmd_out = 'netsh advfirewall firewall delete rule name="NullTrace_Isolation_Block_Out"'
+        cmd_in = 'netsh advfirewall firewall delete rule name="NullTrace_Isolation_Block_In"'
         try:
-            cmd1 = 'netsh advfirewall firewall delete rule name="NullTrace_Isolation_Block_Out"'
-            cmd2 = 'netsh advfirewall firewall delete rule name="NullTrace_Isolation_Block_In"'
-            subprocess.run(cmd1, shell=True)
-            subprocess.run(cmd2, shell=True)
+            if self.is_admin():
+                subprocess.run(cmd_out, shell=True)
+                subprocess.run(cmd_in, shell=True)
+            else:
+                ps_cmd = 'powershell -Command "Start-Process netsh -ArgumentList \'advfirewall firewall delete rule name=\\\"NullTrace_Isolation_Block_Out\\\"\' -Verb RunAs -Wait; Start-Process netsh -ArgumentList \'advfirewall firewall delete rule name=\\\"NullTrace_Isolation_Block_In\\\"\' -Verb RunAs -Wait"'
+                subprocess.run(ps_cmd, shell=True)
+
             self.is_network_isolated = False
             return True, "Endpoint network connection restored."
         except Exception as e:
