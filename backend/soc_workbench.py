@@ -161,51 +161,178 @@ async def investigate_ioc(req: IOCInvestigateRequest):
 
     geo_isp = f"{geoip_data.get('isp', 'Internet Provider')} ({geoip_data.get('as', 'ASN')}), {geoip_data.get('country', 'Global')}" if geoip_data.get('isp') else "External Infrastructure"
 
-    # MITRE ATT&CK Mapping
+    # Comprehensive MITRE ATT&CK Threat Mapping Generator
     mitre_mappings = []
-    if ioc_type in ["IPv4", "IPv6", "Domain", "URL"]:
-        mitre_mappings.append({
-            "tactic": "Command and Control",
-            "technique": "Application Layer Protocol",
-            "id": "T1071",
-            "description": f"Adversaries may use HTTP/S/DNS protocols to endpoint infrastructure ({clean_target}).",
-            "detection": "Inspect netflow logs, DNS query logs, and proxy logs for anomalous outgoing traffic.",
-            "mitigation": "Enforce strict egress filtering, DNS sinkholing, and proxy content inspection."
-        })
-        mitre_mappings.append({
-            "tactic": "Initial Access",
-            "technique": "Spearphishing Link",
-            "id": "T1566.002",
-            "description": f"Adversaries may send spearphishing emails with links to web infrastructure ({clean_target}).",
-            "detection": "Analyze email gateway logs and web proxy logs for user access to newly observed domains.",
-            "mitigation": "Use email security gateways with URL rewriting and anti-phishing defense."
-        })
-    elif ioc_type in ["SHA256", "SHA1", "MD5"]:
-        mitre_mappings.append({
-            "tactic": "Execution",
-            "technique": "Command and Scripting Interpreter",
-            "id": "T1059",
-            "description": "Adversaries may execute commands, scripts, or malicious binaries to control compromised hosts.",
-            "detection": "Monitor process execution creation events (Sysmon Event ID 1 / Windows 4688) and command line arguments.",
-            "mitigation": "Restrict execution via AppLocker, PowerShell Constrained Language Mode, and Endpoint Detection (EDR)."
-        })
-        mitre_mappings.append({
-            "tactic": "Persistence",
-            "technique": "Boot or Logon Autostart Execution",
-            "id": "T1547",
-            "description": "Adversaries may configure system settings to automatically execute malware upon boot or logon.",
-            "detection": "Monitor registry modifications to Run/RunOnce keys and Startup folders.",
-            "mitigation": "Audit startup entries and enforce signature validation for binaries."
-        })
-    elif ioc_type == "CVE ID":
-        mitre_mappings.append({
-            "tactic": "Initial Access",
-            "technique": "Exploit Public-Facing Application",
-            "id": "T1190",
-            "description": "Adversaries may attempt to take advantage of a weakness in an Internet-facing application.",
-            "detection": "Monitor application web server logs for suspicious payloads and 500 internal errors.",
-            "mitigation": "Apply vendor security patches, deploy Web Application Firewalls (WAF), and disable unused services."
-        })
+    q_lower = raw_query.lower()
+
+    # 1. Ransomware & Anti-Encryption Tactics (Canary / LockBit / Encryption)
+    if any(kw in q_lower for kw in ["ransomware", "lockbit", "canary", "encrypt", "vault", "blackcat"]):
+        mitre_mappings.extend([
+            {
+                "tactic": "Impact",
+                "technique": "Data Encrypted for Impact",
+                "id": "T1486",
+                "description": f"Adversaries may encrypt data on target systems to interrupt availability. Target indicator: [{clean_target}].",
+                "detection": "Monitor rapid file modification volume, canary decoy file access, and process encryption behavior.",
+                "mitigation": "Deploy Sentinel EDR Canary Shield, maintain offline immutable backups, and enable automated process termination."
+            },
+            {
+                "tactic": "Execution",
+                "technique": "Command and Scripting Interpreter",
+                "id": "T1059.001",
+                "description": "Adversaries may execute malicious PowerShell scripts to initiate encryption routines.",
+                "detection": "Audit PowerShell Script Block Logging (Event ID 4104) and process creation trees.",
+                "mitigation": "Enforce PowerShell Constrained Language Mode and AppLocker script restrictions."
+            },
+            {
+                "tactic": "Defense Evasion",
+                "technique": "Impair Defenses: Disable Security Tools",
+                "id": "T1562.001",
+                "description": "Adversaries may attempt to disable Windows Defender or local logging services before encryption.",
+                "detection": "Monitor Windows Event ID 7036 (Service stop) and Registry tampering under AntiSpyware keys.",
+                "mitigation": "Enable Tamper Protection in Windows Defender and enforce strict local admin rights."
+            },
+            {
+                "tactic": "Persistence",
+                "technique": "Boot or Logon Autostart Execution",
+                "id": "T1547.001",
+                "description": "Ransomware payloads establish registry persistence keys to survive host reboots.",
+                "detection": "Monitor registry modifications under HKCU\\...\\Run and Startup folders.",
+                "mitigation": "Audit startup entries and block unverified binary executions."
+            }
+        ])
+
+    # 2. Phishing & Social Engineering Tactics
+    elif any(kw in q_lower for kw in ["phish", "email", "login", "bank", "otp", "fake", "job"]):
+        mitre_mappings.extend([
+            {
+                "tactic": "Initial Access",
+                "technique": "Spearphishing Link",
+                "id": "T1566.002",
+                "description": f"Adversaries send targeted emails containing links to credential harvesting sites ({clean_target}).",
+                "detection": "Analyze email gateway security logs and web proxy URL inspection records.",
+                "mitigation": "Deploy automated URL rewriting, DMARC/SPF verification, and Security Awareness Training."
+            },
+            {
+                "tactic": "Credential Access",
+                "technique": "Input Capture: Phishing Landing Page",
+                "id": "T1056.001",
+                "description": "Adversaries host replica login portals to capture user credentials and MFA session tokens.",
+                "detection": "Monitor outbound proxy traffic to newly registered domains (<30 days old).",
+                "mitigation": "Enforce FIDO2 / WebAuthn hardware-based Multi-Factor Authentication."
+            },
+            {
+                "tactic": "Resource Development",
+                "technique": "Acquire Infrastructure: Domains",
+                "id": "T1583.001",
+                "description": "Adversaries acquire spoofed look-alike domains to deceive users.",
+                "detection": "Perform continuous brand domain monitoring and typo-squatting audits.",
+                "mitigation": "Register protective brand domain variations and sinkhole malicious DNS lookups."
+            }
+        ])
+
+    # 3. CVE / Exploit Vulnerabilities
+    elif ioc_type == "CVE ID" or "cve" in q_lower:
+        mitre_mappings.extend([
+            {
+                "tactic": "Initial Access",
+                "technique": "Exploit Public-Facing Application",
+                "id": "T1190",
+                "description": f"Adversaries exploit vulnerability [{clean_target}] in web applications to gain initial access.",
+                "detection": "Inspect WAF application logs, web server error codes (HTTP 500), and buffer overflow signatures.",
+                "mitigation": "Apply vendor security patch immediately, enforce WAF virtual patching, and isolate public subnets."
+            },
+            {
+                "tactic": "Privilege Escalation",
+                "technique": "Exploitation for Privilege Escalation",
+                "id": "T1068",
+                "description": "Adversaries exploit software vulnerabilities to elevate permissions to SYSTEM or root.",
+                "detection": "Monitor process token elevation events and kernel exploitation calls.",
+                "mitigation": "Enforce Least Privilege access controls and kernel exploit protection (DEP/ASLR)."
+            },
+            {
+                "tactic": "Execution",
+                "technique": "Exploitation for Client Execution",
+                "id": "T1203",
+                "description": "Adversaries exploit vulnerabilities in client applications to execute arbitrary shellcode.",
+                "detection": "Monitor memory access events and unusual child processes spawned by web servers.",
+                "mitigation": "Use exploit mitigation toolkits and maintain rigid software update cadences."
+            }
+        ])
+
+    # 4. Binary Malware Artifacts (SHA256 / MD5 / EXE)
+    elif ioc_type in ["SHA256", "SHA1", "MD5"] or any(kw in q_lower for kw in [".exe", ".dll", "trojan", "malware", "payload"]):
+        mitre_mappings.extend([
+            {
+                "tactic": "Execution",
+                "technique": "Command and Scripting Interpreter",
+                "id": "T1059",
+                "description": f"Adversaries execute malicious binary artifact [{clean_target}] on compromised hosts.",
+                "detection": "Monitor process execution creation events (Sysmon Event ID 1 / Windows 4688) and command line arguments.",
+                "mitigation": "Restrict execution via AppLocker, PowerShell Constrained Language Mode, and Endpoint Detection (EDR)."
+            },
+            {
+                "tactic": "Defense Evasion",
+                "technique": "Obfuscated Files or Information",
+                "id": "T1027",
+                "description": "Binary payload employs entropy packing or obfuscation to evade static antivirus inspection.",
+                "detection": "Perform high-entropy section analysis and YARA rule signature inspection.",
+                "mitigation": "Enforce automated sandbox detonation and memory inspection heuristics."
+            },
+            {
+                "tactic": "Persistence",
+                "technique": "Boot or Logon Autostart Execution",
+                "id": "T1547.001",
+                "description": "Binary modifies Windows Registry autostart entries to maintain persistent access.",
+                "detection": "Monitor registry modifications under HKCU\\...\\Run keys.",
+                "mitigation": "Audit startup entries and block unverified binary executions."
+            },
+            {
+                "tactic": "Discovery",
+                "technique": "System Information Discovery",
+                "id": "T1082",
+                "description": "Malware queries OS version, environment variables, and network configuration.",
+                "detection": "Audit system discovery command invocations (whoami, systeminfo, netstat).",
+                "mitigation": "Restrict command-line utility execution for standard user accounts."
+            }
+        ])
+
+    # 5. Generic IP / Domain / Network C2 Indicators
+    else:
+        mitre_mappings.extend([
+            {
+                "tactic": "Command and Control",
+                "technique": "Application Layer Protocol: Web Protocols",
+                "id": "T1071.001",
+                "description": f"Adversaries utilize HTTP/HTTPS protocols to communicate with C2 server [{clean_target}].",
+                "detection": "Inspect netflow logs, proxy SSL interception records, and high-frequency beaconing intervals.",
+                "mitigation": "Enforce strict egress proxy filtering, SSL decryption, and automated IP/Domain sinkholing."
+            },
+            {
+                "tactic": "Command and Control",
+                "technique": "Encrypted Channel: Asymmetric Cryptography",
+                "id": "T1573.002",
+                "description": "Adversaries employ SSL/TLS encryption to hide C2 traffic from perimeter IDS.",
+                "detection": "Inspect TLS SNI headers, self-signed SSL certificates, and untrusted certificate issuers.",
+                "mitigation": "Deploy TLS inspection gateways and block connections to unverified CA certificates."
+            },
+            {
+                "tactic": "Initial Access",
+                "technique": "Spearphishing Link",
+                "id": "T1566.002",
+                "description": f"Adversaries send spearphishing emails containing links to web infrastructure ({clean_target}).",
+                "detection": "Analyze email gateway logs and web proxy logs for user access to newly observed domains.",
+                "mitigation": "Use email security gateways with URL rewriting and anti-phishing defense."
+            },
+            {
+                "tactic": "Lateral Movement",
+                "technique": "Remote Services: Remote Desktop Protocol",
+                "id": "T1021.001",
+                "description": "Adversaries connect via RDP/SSH to move laterally across internal subnets.",
+                "detection": "Monitor RDP Logon Event ID 4624 (Type 10) and unusual source IP connection attempts.",
+                "mitigation": "Require MFA for RDP access and restrict RDP ports via internal host firewalls."
+            }
+        ])
 
     # Nodes & Links for correlation graph
     nodes = [

@@ -650,9 +650,37 @@ export default function SOCWorkbenchPage() {
         {/* TAB 3: MITRE ATT&CK */}
         {activeTab === "mitre" && (
           <div className="space-y-6">
+            {/* Quick Threat Presets */}
+            <div className="glass rounded-2xl p-4 border border-cyan-500/20 bg-cyan-950/10 flex flex-col md:flex-row items-center justify-between gap-4">
+              <div>
+                <h4 className="text-xs font-mono font-bold text-cyan-300 uppercase tracking-wider">Interactive Threat Scenario Demos</h4>
+                <p className="text-[11px] text-white/50 font-sans mt-0.5">Click any threat scenario to load verified MITRE ATT&CK tactics & mitigation strategies:</p>
+              </div>
+
+              <div className="flex flex-wrap gap-2">
+                {[
+                  { name: "💥 Ransomware Outbreak", query: "LockBit Ransomware Canary Encryptor" },
+                  { name: "📧 Spearphishing Attack", query: "phishing-bank-login-secure.xyz" },
+                  { name: "🐛 CVE Exploit", query: "CVE-2026-1180 Remote Execution" },
+                  { name: "💾 Binary Malware", query: "e3b0c44298fc1c149afbf4c8996fb924" },
+                  { name: "🌐 C2 Beaconing", query: "185.220.101.5 C2 Infrastructure" }
+                ].map((demo) => (
+                  <button
+                    key={demo.name}
+                    onClick={() => { setSearchQuery(demo.query); handleInvestigate(demo.query); }}
+                    className="px-3 py-1.5 rounded-xl bg-white/5 hover:bg-cyan-500/20 border border-white/10 text-xs font-mono text-cyan-300 font-bold transition-all hover:border-cyan-400"
+                  >
+                    {demo.name}
+                  </button>
+                ))}
+              </div>
+            </div>
+
             <div className="glass rounded-2xl p-6 border border-white/5 space-y-4">
               <div className="flex justify-between items-center">
-                <h3 className="font-bold text-xs uppercase font-mono tracking-widest text-white/70">MITRE ATT&CK Threat Mapping Matrix</h3>
+                <h3 className="font-bold text-xs uppercase font-mono tracking-widest text-white/70">
+                  MITRE ATT&CK Threat Mapping Matrix {result?.ioc ? `— Target: [${result.ioc}]` : ""}
+                </h3>
                 <span className="text-xs font-mono text-cyan-400">Enterprise Framework v14</span>
               </div>
 
@@ -661,8 +689,8 @@ export default function SOCWorkbenchPage() {
                   {result.mitreMappings.map((m, idx) => (
                     <div key={idx} className="p-4 rounded-xl bg-white/[0.02] border border-cyan-500/20 space-y-2 font-mono text-xs">
                       <div className="flex justify-between text-cyan-400 font-bold">
-                        <span>{m.tactic}</span>
-                        <span className="bg-cyan-500/20 px-2 py-0.5 rounded text-[10px]">{m.id}</span>
+                        <span className="uppercase text-[11px] font-mono tracking-wider">{m.tactic}</span>
+                        <span className="bg-cyan-500/20 text-cyan-300 px-2 py-0.5 rounded text-[10px] font-bold">{m.id}</span>
                       </div>
                       <p className="text-white font-bold text-sm">{m.technique}</p>
                       <p className="text-white/60 font-sans leading-relaxed text-xs">{m.description}</p>
@@ -674,8 +702,54 @@ export default function SOCWorkbenchPage() {
                   ))}
                 </div>
               ) : (
-                <div className="p-8 text-center text-white/40 text-xs font-mono">
-                  No active IOC mapped. Run an investigation to map verified MITRE ATT&CK techniques.
+                <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+                  {[
+                    {
+                      tactic: "Impact",
+                      technique: "Data Encrypted for Impact",
+                      id: "T1486",
+                      description: "Adversaries encrypt data on target systems to interrupt availability. Captured via Canary Shield.",
+                      detection: "Monitor rapid file modification volume, canary decoy file access, and process behavior.",
+                      mitigation: "Deploy Sentinel EDR Canary Shield and automated process termination."
+                    },
+                    {
+                      tactic: "Execution",
+                      technique: "Command and Scripting Interpreter",
+                      id: "T1059.001",
+                      description: "Adversaries execute malicious PowerShell scripts to initiate payload deployment.",
+                      detection: "Audit Script Block Logging (Event ID 4104) and parent-child process execution trees.",
+                      mitigation: "Enforce PowerShell Constrained Language Mode and AppLocker rules."
+                    },
+                    {
+                      tactic: "Initial Access",
+                      technique: "Spearphishing Link",
+                      id: "T1566.002",
+                      description: "Adversaries send targeted emails containing links to credential harvesting landing pages.",
+                      detection: "Inspect email gateway logs, URL rewriting records, and newly registered domain proxy traffic.",
+                      mitigation: "Deploy automated URL rewriting and DMARC/SPF authentication verification."
+                    },
+                    {
+                      tactic: "Command and Control",
+                      technique: "Application Layer Protocol: Web Protocols",
+                      id: "T1071.001",
+                      description: "Adversaries utilize HTTP/HTTPS protocols to communicate with C2 infrastructure.",
+                      detection: "Inspect netflow logs, proxy SSL interception records, and high-frequency beaconing intervals.",
+                      mitigation: "Enforce strict egress proxy filtering, SSL decryption, and automated IP/Domain sinkholing."
+                    }
+                  ].map((m, idx) => (
+                    <div key={idx} className="p-4 rounded-xl bg-white/[0.02] border border-cyan-500/20 space-y-2 font-mono text-xs">
+                      <div className="flex justify-between text-cyan-400 font-bold">
+                        <span className="uppercase text-[11px] font-mono tracking-wider">{m.tactic}</span>
+                        <span className="bg-cyan-500/20 text-cyan-300 px-2 py-0.5 rounded text-[10px] font-bold">{m.id}</span>
+                      </div>
+                      <p className="text-white font-bold text-sm">{m.technique}</p>
+                      <p className="text-white/60 font-sans leading-relaxed text-xs">{m.description}</p>
+                      <div className="pt-2 border-t border-white/5 space-y-1 text-[11px]">
+                        <p className="text-white/40"><span className="text-yellow-400 font-bold">Detection Strategy:</span> {m.detection}</p>
+                        <p className="text-white/40"><span className="text-green-400 font-bold">Mitigation Strategy:</span> {m.mitigation}</p>
+                      </div>
+                    </div>
+                  ))}
                 </div>
               )}
             </div>
